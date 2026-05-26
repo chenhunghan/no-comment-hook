@@ -171,5 +171,3 @@ make uninstall-local
 ## License
 
 MIT. See [LICENSE](./LICENSE).
-
-<!-- ci kick -->
