@@ -1,0 +1,16 @@
+{
+  "name": "no-comment-hook",
+  "metadata": {
+    "description": "Comment-review hook for Claude Code"
+  },
+  "owner": {
+    "name": "Hung-Han Chen",
+    "email": "chenhungh@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "no-comment-hook",
+      "source": "./"
+    }
+  ]
+}
