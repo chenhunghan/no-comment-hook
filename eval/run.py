@@ -13,7 +13,6 @@ import time
 BIN = os.path.join(os.path.dirname(__file__), "..", "bin", "no-comment-hook")
 WORKDIR = "/tmp/nch-eval"
 
-# principle number -> key, mirroring src/options.rs PRINCIPLES
 NUM_TO_KEY = {
     1: "redundant", 2: "change-narration", 3: "non-local",
     4: "over-explained", 5: "commented-out", 6: "bare-todo", 7: "apology",
