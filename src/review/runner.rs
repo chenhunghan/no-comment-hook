@@ -6,20 +6,24 @@ use std::time::{Duration, Instant};
 
 use super::hunks::Hunk;
 use super::parse::parse_findings;
-use super::prompt::build_prompt;
+use super::prompt::{build_system_prompt, build_user_message};
 use crate::options::Options;
 
+const MAX_HUNKS_PER_CALL: usize = 20;
+
 pub fn run_parallel(hunks: &[Hunk], opts: &Options) -> Vec<String> {
-    let mut all = Vec::new();
+    let system = build_system_prompt(opts);
+    let batches: Vec<&[Hunk]> = hunks.chunks(MAX_HUNKS_PER_CALL).collect();
     let parallelism = opts.max_parallel.max(1);
-    for chunk in hunks.chunks(parallelism) {
+    let mut all = Vec::new();
+    for group in batches.chunks(parallelism) {
         thread::scope(|s| {
             let (tx, rx) = mpsc::channel::<Vec<String>>();
-            for hunk in chunk {
+            for &batch in group {
                 let tx = tx.clone();
+                let system = system.as_str();
                 s.spawn(move || {
-                    let f = review_hunk(hunk, opts);
-                    let _ = tx.send(f);
+                    let _ = tx.send(review_batch(batch, system, opts));
                 });
             }
             drop(tx);
@@ -31,18 +35,18 @@ pub fn run_parallel(hunks: &[Hunk], opts: &Options) -> Vec<String> {
     all
 }
 
-fn review_hunk(hunk: &Hunk, opts: &Options) -> Vec<String> {
-    let prompt = build_prompt(hunk, opts);
-    let Some(output) = invoke_claude(&prompt, opts) else {
+fn review_batch(hunks: &[Hunk], system: &str, opts: &Options) -> Vec<String> {
+    let user = build_user_message(hunks, opts);
+    let Some(output) = invoke_claude(system, &user, opts) else {
         if opts.debug {
             println!("[no-comment-hook] claude -p returned no output");
         }
         return Vec::new();
     };
-    parse_findings(&output, &hunk.file_path)
+    parse_findings(&output, hunks)
 }
 
-fn invoke_claude(prompt: &str, opts: &Options) -> Option<String> {
+fn invoke_claude(system: &str, user: &str, opts: &Options) -> Option<String> {
     let mut command = Command::new(&opts.claude_bin);
     command
         .args([
@@ -54,6 +58,8 @@ fn invoke_claude(prompt: &str, opts: &Options) -> Option<String> {
             "",
             "--effort",
             &opts.effort,
+            "--system-prompt",
+            system,
         ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -64,7 +70,7 @@ fn invoke_claude(prompt: &str, opts: &Options) -> Option<String> {
     let mut child = command.spawn().ok()?;
 
     if let Some(mut stdin) = child.stdin.take() {
-        let _ = stdin.write_all(prompt.as_bytes());
+        let _ = stdin.write_all(user.as_bytes());
     }
 
     let stdout = child.stdout.take();
