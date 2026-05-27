@@ -13,30 +13,19 @@ claude plugin marketplace add https://github.com/chenhunghan/no-comment-hook.git
 claude plugin install no-comment-hook
 ```
 
-## What it flags
-
-Two kinds of comment that agents tend to add:
-
-- **Change-narrative** — notes about the *edit*, not the code: "previously…", "the fix is…", what the code used to do, commented-out leftovers, issue/PR references. Reads fine today, rots tomorrow.
-- **Low-value noise** — comments that just restate the code or a name, bare `TODO`/`FIXME`, or apologies like `// sorry, this is hacky`.
-
-**Left alone:** genuine *why* comments and public API docs (Rust `///`, JSDoc, Go exported-symbol comments, Python docstrings). Works across Rust, TypeScript/JavaScript, Python, Go, Java, C/C++, Ruby, Swift, Kotlin, Scala, C#, and PHP.
-
-Each check is defined below, with its source; turn any off under [Configure](#configure).
-
 ## The checks
 
-Each check maps to an established comment *smell* — drawn from **Clean Code** (the industry-standard treatment of good vs. bad comments) and **2025–2026 research on AI-generated code "slop"** — then weighted toward how *agents* actually comment. Public-API documentation and genuine *why* comments are kept: they earn their place.
+Each check maps to an established comment *smell* — from [Clean Code][cc] (the industry standard) and the 2025–2026 research on AI-generated code "slop" cited below — weighted toward how *agents* actually comment. Public-API documentation (Rust `///`, JSDoc, Go exported-symbol comments, Python docstrings) and genuine *why* comments are kept: they earn their place. Works across Rust, TypeScript/JavaScript, Python, Go, Java, C/C++, Ruby, Swift, Kotlin, Scala, C#, and PHP.
 
 | Key | Flags a comment that… | Grounded in |
 |---|---|---|
-| `redundant` | repeats what the code, name, or signature already says — including tutorial-style explanation of basic syntax (`// increment counter`) | Clean Code (Redundant / Noise); over-commenting is the most-documented LLM-slop pattern |
-| `change-narration` | narrates the *edit*, its history, or the plan rather than the code as it stands ("the fix is", "previously", "as requested", "changed to async") | the diff-narration agents show in the AI-slop studies; cf. Clean Code (Journal Comments) |
-| `non-local` | points to code or process outside the lines it sits on ("mirrors X", "same as Y", issue/PR refs, "added for X flow") | Clean Code (Nonlocal Information) |
-| `over-explained` | argues to a reviewer over several sentences, or reads like a mini design doc | Clean Code (Too Much Information / Mumbling) |
-| `commented-out` | is code left in a comment instead of deleted | Clean Code (Commented-Out Code) |
-| `bare-todo` | is a `TODO`/`FIXME` with no tracked ticket or concrete detail | Clean Code (TODO Comments) |
-| `apology` | apologizes or hedges (`// hacky`, `// sorry`, `// simplified version`) | Clean Code ("don't comment bad code — rewrite it") |
+| `redundant` | repeats what the code, name, or signature already says — including tutorial-style explanation of basic syntax (`// increment counter`) | [Clean Code][cc] (Redundant / Noise); over-commenting is the most-documented LLM-slop pattern |
+| `change-narration` | narrates the *edit*, its history, or the plan rather than the code as it stands ("the fix is", "previously", "as requested", "changed to async") | the diff-narration agents show in the AI-slop studies; cf. [Clean Code][cc] (Journal Comments) |
+| `non-local` | points to code or process outside the lines it sits on ("mirrors X", "same as Y", issue/PR refs, "added for X flow") | [Clean Code][cc] (Nonlocal Information) |
+| `over-explained` | argues to a reviewer over several sentences, or reads like a mini design doc | [Clean Code][cc] (Too Much Information / Mumbling) |
+| `commented-out` | is code left in a comment instead of deleted | [Clean Code][cc] (Commented-Out Code) |
+| `bare-todo` | is a `TODO`/`FIXME` with no tracked ticket or concrete detail | [Clean Code][cc] (TODO Comments) |
+| `apology` | apologizes or hedges (`// hacky`, `// sorry`, `// simplified version`) | [Clean Code][cc] ("don't comment bad code — rewrite it") |
 
 ### References
 
@@ -111,3 +100,5 @@ make uninstall-local
 ## License
 
 MIT. See [LICENSE](./LICENSE).
+
+[cc]: https://www.informit.com/store/clean-code-a-handbook-of-agile-software-craftsmanship-9780132350884
