@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.3.0...no-comment-hook-v0.4.0) (2026-05-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* --disable/--enable principle keys are renamed. The group keys (session-doc, general, all) are unchanged.
+* NO_COMMENT_HOOK_* environment variables are no longer read. Configure via flags on the hook command in hooks/hooks.json (or in ~/.claude/settings.json for a local-dev install).
+
+### Features
+
+* configure via CLI flags only; drop env-var support ([04c4244](https://github.com/chenhunghan/no-comment-hook/commit/04c42449b3bd3787ca272f29af73d990b25dc07a))
+* consolidate principles into 7 non-overlapping categories ([408b5a1](https://github.com/chenhunghan/no-comment-hook/commit/408b5a1f3adcacdc1dac4f24dfa184376020a690))
+
 ## [0.3.0](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.2.0...no-comment-hook-v0.3.0) (2026-05-27)
 
 
