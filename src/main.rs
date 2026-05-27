@@ -22,7 +22,7 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
-    let opts = Options::from_env_and_args(&args);
+    let opts = Options::from_args(&args);
 
     let mut input = String::new();
     if io::stdin().read_to_string(&mut input).is_err() {
@@ -61,6 +61,7 @@ REVIEW OPTIONS
   --timeout=<sec>                      Per-hunk reviewer timeout (default: 60)
   --max-parallel=<N>                   Concurrent claude -p invocations (default: 4)
   --source-ext=<.foo,.bar>             Extend source-extension allowlist
+  --claude-bin=<path>                  Path to `claude` (default: claude on PATH)
   --no-pre-filter                      Skip comment-marker pre-filter
   --debug                              Diagnostics to stdout
 
@@ -70,18 +71,8 @@ PRINCIPLE KEYS
                       no-commented-out no-bare-todo no-apology
   Groups:             session-doc | general | all
 
-ENV VARS (override CLI flags)
-  NO_COMMENT_HOOK_DISABLE           csv principle keys to disable
-  NO_COMMENT_HOOK_ENABLE            csv principle keys to re-enable
-  NO_COMMENT_HOOK_MODEL             override --model
-  NO_COMMENT_HOOK_EFFORT            override --effort
-  NO_COMMENT_HOOK_CONTEXT_LINES     override --context-lines
-  NO_COMMENT_HOOK_TIMEOUT           override --timeout
-  NO_COMMENT_HOOK_MAX_PARALLEL      override --max-parallel
-  NO_COMMENT_HOOK_SOURCE_EXT        extend allowlist
-  NO_COMMENT_HOOK_NO_PREFILTER=1    same as --no-pre-filter
-  NO_COMMENT_HOOK_DEBUG=1           same as --debug
-  NO_COMMENT_HOOK_CLAUDE_BIN        path to `claude` (default: claude on PATH)
+All configuration is via the flags above; set them on the --review command
+in hooks/hooks.json (or in ~/.claude/settings.json for a local-dev install).
 ",
         version = env!("CARGO_PKG_VERSION")
     );

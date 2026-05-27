@@ -1,5 +1,3 @@
-use std::env;
-
 pub struct Options {
     pub source_ext: Vec<String>,
     pub disabled: Vec<String>,
@@ -147,10 +145,9 @@ impl Default for Options {
 }
 
 impl Options {
-    pub fn from_env_and_args(args: &[String]) -> Self {
+    pub fn from_args(args: &[String]) -> Self {
         let mut o = Self::default();
         apply_args(&mut o, args);
-        apply_env(&mut o);
         o
     }
 
@@ -183,56 +180,12 @@ fn apply_args(o: &mut Options, args: &[String]) {
             }
         } else if let Some(v) = arg.strip_prefix("--source-ext=") {
             extend_source_ext(o, v);
+        } else if let Some(v) = arg.strip_prefix("--claude-bin=") {
+            o.claude_bin = v.to_string();
         } else if arg == "--no-pre-filter" {
             o.pre_filter_off = true;
         } else if arg == "--debug" {
             o.debug = true;
-        }
-    }
-}
-
-type EnvApplier = fn(&str, &mut Options);
-
-const ENV_APPLIERS: &[(&str, EnvApplier)] = &[
-    ("NO_COMMENT_HOOK_DISABLE", |v, o| push_disabled(o, v)),
-    ("NO_COMMENT_HOOK_ENABLE", |v, o| remove_disabled(o, v)),
-    ("NO_COMMENT_HOOK_MODEL", |v, o| o.model = v.to_string()),
-    ("NO_COMMENT_HOOK_EFFORT", |v, o| o.effort = v.to_string()),
-    ("NO_COMMENT_HOOK_CONTEXT_LINES", |v, o| {
-        if let Ok(n) = v.parse() {
-            o.context_lines = n;
-        }
-    }),
-    ("NO_COMMENT_HOOK_TIMEOUT", |v, o| {
-        if let Ok(n) = v.parse() {
-            o.timeout_secs = n;
-        }
-    }),
-    ("NO_COMMENT_HOOK_MAX_PARALLEL", |v, o| {
-        if let Ok(n) = v.parse() {
-            o.max_parallel = n;
-        }
-    }),
-    ("NO_COMMENT_HOOK_SOURCE_EXT", |v, o| extend_source_ext(o, v)),
-    ("NO_COMMENT_HOOK_NO_PREFILTER", |v, o| {
-        if is_truthy(v) {
-            o.pre_filter_off = true;
-        }
-    }),
-    ("NO_COMMENT_HOOK_DEBUG", |v, o| {
-        if is_truthy(v) {
-            o.debug = true;
-        }
-    }),
-    ("NO_COMMENT_HOOK_CLAUDE_BIN", |v, o| {
-        o.claude_bin = v.to_string();
-    }),
-];
-
-fn apply_env(o: &mut Options) {
-    for (name, apply) in ENV_APPLIERS {
-        if let Ok(v) = env::var(name) {
-            apply(&v, o);
         }
     }
 }
@@ -291,10 +244,6 @@ fn expand_group(key: &str) -> Vec<String> {
         other if !other.is_empty() => vec![other.to_string()],
         _ => Vec::new(),
     }
-}
-
-fn is_truthy(v: &str) -> bool {
-    v == "1" || v.eq_ignore_ascii_case("true") || v.eq_ignore_ascii_case("yes")
 }
 
 #[cfg(test)]
@@ -382,6 +331,19 @@ mod tests {
         let mut o = Options::default();
         apply_args(&mut o, &["--effort=high".to_string()]);
         assert_eq!(o.effort, "high");
+    }
+
+    #[test]
+    fn parse_claude_bin_flag() {
+        let mut o = Options::default();
+        apply_args(&mut o, &["--claude-bin=/opt/claude".to_string()]);
+        assert_eq!(o.claude_bin, "/opt/claude");
+    }
+
+    #[test]
+    fn from_args_applies_flags() {
+        let o = Options::from_args(&["--model=claude-sonnet-4-6".to_string()]);
+        assert_eq!(o.model, "claude-sonnet-4-6");
     }
 
     #[test]
