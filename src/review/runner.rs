@@ -43,7 +43,7 @@ fn review_batch(hunks: &[Hunk], system: &str, opts: &Options) -> Vec<String> {
         }
         return Vec::new();
     };
-    parse_findings(&output, hunks)
+    parse_findings(&output, hunks, opts)
 }
 
 fn invoke_claude(system: &str, user: &str, opts: &Options) -> Option<String> {

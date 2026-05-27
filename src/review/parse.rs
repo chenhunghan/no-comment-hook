@@ -2,8 +2,9 @@ use std::fmt::Write as _;
 
 use super::hunks::Hunk;
 use crate::extract;
+use crate::options::Options;
 
-pub fn parse_findings(claude_output: &str, hunks: &[Hunk]) -> Vec<String> {
+pub fn parse_findings(claude_output: &str, hunks: &[Hunk], opts: &Options) -> Vec<String> {
     let inner =
         extract::string_field(claude_output, "result").unwrap_or_else(|| claude_output.to_string());
     let trimmed = strip_code_fence(&inner);
@@ -11,6 +12,9 @@ pub fn parse_findings(claude_output: &str, hunks: &[Hunk]) -> Vec<String> {
     let mut out = Vec::new();
     for obj in extract::objects_in_array(trimmed, "findings") {
         let principle = extract_principle(obj).unwrap_or_else(|| "?".to_string());
+        if !opts.principle_enabled(&principle) {
+            continue;
+        }
         let quote = extract::string_field(obj, "quote").unwrap_or_default();
         let why = extract::string_field(obj, "why").unwrap_or_default();
         let file_path = finding_file(obj, hunks);
@@ -88,13 +92,13 @@ mod tests {
     #[test]
     fn parse_findings_handles_empty() {
         let claude = r#"{"result":"{\"findings\":[]}"}"#;
-        assert!(parse_findings(claude, &one("/x.rs")).is_empty());
+        assert!(parse_findings(claude, &one("/x.rs"), &Options::default()).is_empty());
     }
 
     #[test]
     fn parse_findings_extracts_single() {
         let claude = r#"{"result":"{\"findings\":[{\"hunk\":1,\"principle\":3,\"quote\":\"// Pin: third arm\",\"why\":\"meta-framing\"}]}"}"#;
-        let f = parse_findings(claude, &one("/x.rs"));
+        let f = parse_findings(claude, &one("/x.rs"), &Options::default());
         assert_eq!(f.len(), 1);
         assert!(f[0].contains("/x.rs"));
         assert!(f[0].contains("principle 3"));
@@ -117,7 +121,7 @@ mod tests {
                 new_text: String::new(),
             },
         ];
-        let f = parse_findings(claude, &hunks);
+        let f = parse_findings(claude, &hunks, &Options::default());
         assert_eq!(f.len(), 1);
         assert!(f[0].contains("/b.rs"));
     }
@@ -126,14 +130,14 @@ mod tests {
     fn parse_findings_missing_hunk_falls_back_to_first() {
         let claude =
             r#"{"result":"{\"findings\":[{\"principle\":1,\"quote\":\"q\",\"why\":\"w\"}]}"}"#;
-        let f = parse_findings(claude, &one("/only.rs"));
+        let f = parse_findings(claude, &one("/only.rs"), &Options::default());
         assert!(f[0].contains("/only.rs"));
     }
 
     #[test]
     fn parse_findings_handles_string_principle() {
         let claude = r#"{"result":"{\"findings\":[{\"hunk\":1,\"principle\":\"change-narration\",\"quote\":\"// x\",\"why\":\"y\"}]}"}"#;
-        let f = parse_findings(claude, &one("/x.rs"));
+        let f = parse_findings(claude, &one("/x.rs"), &Options::default());
         assert_eq!(f.len(), 1);
         assert!(f[0].contains("principle change-narration"));
     }
@@ -141,15 +145,25 @@ mod tests {
     #[test]
     fn parse_findings_handles_markdown_fence() {
         let claude = r#"{"result":"```json\n{\"findings\":[{\"hunk\":1,\"principle\":1,\"quote\":\"a\",\"why\":\"b\"}]}\n```"}"#;
-        let f = parse_findings(claude, &one("/x.rs"));
+        let f = parse_findings(claude, &one("/x.rs"), &Options::default());
         assert_eq!(f.len(), 1);
     }
 
     #[test]
     fn parse_findings_handles_raw_output_no_wrapper() {
         let raw = r#"{"findings":[{"hunk":1,"principle":1,"quote":"a","why":"b"}]}"#;
-        let f = parse_findings(raw, &one("/x.rs"));
+        let f = parse_findings(raw, &one("/x.rs"), &Options::default());
         assert_eq!(f.len(), 1);
+    }
+
+    #[test]
+    fn parse_findings_drops_disabled_principle() {
+        let claude = r#"{"result":"{\"findings\":[{\"hunk\":1,\"principle\":1,\"quote\":\"q\",\"why\":\"w\"}]}"}"#;
+        let opts = Options {
+            disabled: vec!["redundant".into()],
+            ..Options::default()
+        };
+        assert!(parse_findings(claude, &one("/x.rs"), &opts).is_empty());
     }
 
     #[test]

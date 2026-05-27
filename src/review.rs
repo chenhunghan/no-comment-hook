@@ -27,6 +27,13 @@ pub fn run(input: &str, opts: &Options) -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
+    if !opts.any_principle_enabled() {
+        if opts.debug {
+            println!("[no-comment-hook] all principles disabled; skipping review");
+        }
+        return ExitCode::SUCCESS;
+    }
+
     let all_hunks = build_hunks(&records);
     let filtered: Vec<Hunk> = all_hunks
         .into_iter()

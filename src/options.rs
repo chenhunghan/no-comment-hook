@@ -112,6 +112,24 @@ impl Options {
     pub fn is_enabled(&self, key: &str) -> bool {
         !self.disabled.iter().any(|d| d == key)
     }
+
+    pub fn any_principle_enabled(&self) -> bool {
+        PRINCIPLES.iter().any(|p| self.is_enabled(p.key))
+    }
+
+    /// The reviewer may emit a principle as its number or its key; resolve either
+    /// and report whether it is enabled. Unknown values are treated as enabled so
+    /// unexpected output is surfaced rather than silently dropped.
+    pub fn principle_enabled(&self, principle: &str) -> bool {
+        let key = match principle.parse::<u32>() {
+            Ok(n) => PRINCIPLES.iter().find(|p| p.number == n).map(|p| p.key),
+            Err(_) => Some(principle),
+        };
+        match key {
+            Some(k) => self.is_enabled(k),
+            None => true,
+        }
+    }
 }
 
 fn apply_args(o: &mut Options, args: &[String]) {
@@ -215,6 +233,25 @@ mod tests {
         for p in PRINCIPLES {
             assert!(o.is_enabled(p.key));
         }
+    }
+
+    #[test]
+    fn any_principle_enabled_tracks_disable_all() {
+        assert!(Options::default().any_principle_enabled());
+        let mut o = Options::default();
+        apply_args(&mut o, &["--disable=all".to_string()]);
+        assert!(!o.any_principle_enabled());
+    }
+
+    #[test]
+    fn principle_enabled_resolves_number_or_key() {
+        let mut o = Options::default();
+        apply_args(&mut o, &["--disable=redundant".to_string()]);
+        assert!(!o.principle_enabled("1")); // 1 == redundant
+        assert!(!o.principle_enabled("redundant"));
+        assert!(o.principle_enabled("2")); // change-narration still on
+        assert!(o.principle_enabled("change-narration"));
+        assert!(o.principle_enabled("99")); // unknown number stays enabled
     }
 
     #[test]
