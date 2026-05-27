@@ -2,6 +2,8 @@
 
 **Stop your AI coding agent from leaving throwaway comments in your code.**
 
+<img width="498" height="455" alt="shut-up" src="https://github.com/user-attachments/assets/8b46a4c1-2ddd-4682-babe-f667df4ab963" />
+
 AI-generated code carries maintainability debt that [persists in shipped repositories](https://arxiv.org/html/2603.28592v2), and redundant or edit-narrating comments (`// the fix is…`, `// increment the counter`) are a [well-studied smell](https://arxiv.org/html/2504.18956v1) in their own right. This Claude Code plugin reviews each comment your agent writes and asks it to fix or delete the noise **before it lands** — automatically after each turn, and silent when your comments are fine. [See how the checks are grounded](#the-checks).
 
 > Sibling project: [ralph-hook-lint](https://github.com/chenhunghan/ralph-hook-lint) (auto-lint hook).
