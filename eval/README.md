@@ -7,8 +7,11 @@ We make two claims and validate each with the rigor the comment-smell literature
 
 ## Categorization (grounded in prior work)
 
-Our `--disable` keys map onto the established 11-type inline-comment-smell taxonomy
-(Jabrayilzade et al., *Taxonomy of Inline Code Comment Smells*, EMSE 2024):
+Our `--disable` keys map onto the 11-type inline-comment-smell taxonomy as used in the
+open [Oztas et al. detection study](https://arxiv.org/html/2504.18956v1) (which also
+publishes the labeled dataset). The category *scheme* originated on **human-written**
+comments (Jabrayilzade et al., SCAM 2021 / EMSE 2024); we adopt the categories but
+**re-weight them for agent output** (see the caveat and the agent-slop references below):
 
 | Our key | Taxonomy type | Working definition |
 |---|---|---|
@@ -31,8 +34,8 @@ slop-vs-not P/R as the headline**, per-category recall as secondary.
 
 ## Ground truth (protocol)
 
-- **Two splits:** (A) *human baseline* — the public Jabrayilzade/Oztas labeled set
-  (2,211 comment–code pairs, 8 OSS Java/Python projects), mapped to our keys;
+- **Two splits:** (A) *human baseline* — the public Oztas labeled set (reuses Jabrayilzade's
+  labels; 2,211 comment–code pairs, 8 OSS Java/Python projects), mapped to our keys;
   (B) *agent set* — a new corpus of **Claude-Code-authored** comments (the gap in the
   literature), captured from real sessions.
 - **≥2 annotators**, report inter-annotator agreement (Oztas reached 88.69%; we report
@@ -57,11 +60,24 @@ false-positive cost.
 
 ## References
 
-- Jabrayilzade, Yurtoğlu, Tüzün — *Taxonomy of Inline Code Comment Smells*, EMSE 2024
-  (DOI 10.1007/s10664-023-10425-5); precursor SCAM 2021.
-- Oztas et al. — *Towards Automated Detection of Inline Code Comment Smells*, EASE 2025
-  (arXiv 2504.18956); replication package on Figshare.
-- *Beyond Strict Rules: LLMs for Code Smell Detection*, arXiv 2601.09873 (ground-truth design).
-- CRAIC — *Detecting Redundant Method Comments*, arXiv 1806.04616 (entailment-from-code).
-- Zhu, Tsantalis, Rigby — *AI-Generated Smells*, arXiv 2605.02741 (agent slop is volume-driven, prompt-resistant).
-- Liu et al. (incl. D. Lo) — *Debt Behind the AI Boom*, arXiv 2603.28592 (agent slop persists in the wild).
+Primary — open on arXiv (full-text HTML), read directly:
+
+- Oztas, Torun, Tüzün — *Towards Automated Detection of Inline Code Comment Smells* —
+  [arxiv.org/html/2504.18956v1](https://arxiv.org/html/2504.18956v1). The comment-smell
+  taxonomy we map to, the public labeled dataset, and the detection baselines (ML 69%, GPT-4 55%).
+- *Beyond Strict Rules: LLMs for Code Smell Detection* —
+  [arxiv.org/html/2601.09873v1](https://arxiv.org/html/2601.09873v1). Ground-truth design.
+- CRAIC — *Detecting Redundant Method Comments* —
+  [arxiv.org/abs/1806.04616](https://arxiv.org/abs/1806.04616). "Entailment from code" (our `redundant`).
+
+Agent-slop context — open on arXiv (full-text HTML), read directly:
+
+- Zhu, Tsantalis, Rigby — *AI-Generated Smells* —
+  [arxiv.org/html/2605.02741](https://arxiv.org/html/2605.02741). Agent slop is volume-driven and prompt-resistant.
+- Liu et al. (incl. D. Lo) — *Debt Behind the AI Boom* —
+  [arxiv.org/html/2603.28592v2](https://arxiv.org/html/2603.28592v2). Agent slop persists in the wild.
+
+Taxonomy origin — not on arXiv, studies human-written comments, not relied on directly:
+
+- Jabrayilzade, Yurtoğlu, Tüzün — *Taxonomy of Inline Code Comment Smells*, EMSE 2024 —
+  [doi.org/10.1007/s10664-023-10425-5](https://doi.org/10.1007/s10664-023-10425-5) (SCAM 2021 precursor).
