@@ -1,4 +1,4 @@
-.PHONY: build install-local uninstall-local clean lint test fmt fmt-check ci
+.PHONY: build install-local uninstall-local clean lint test fmt fmt-check ci eval
 
 BINARY            := bin/no-comment-hook
 TARGET            := target/release/no-comment-hook
@@ -43,5 +43,8 @@ lint:
 
 test:
 	cargo test
+
+eval: build
+	python3 eval/run.py
 
 ci: fmt-check lint test
