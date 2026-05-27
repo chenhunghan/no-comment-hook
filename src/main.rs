@@ -66,10 +66,9 @@ REVIEW OPTIONS
   --debug                              Diagnostics to stdout
 
 PRINCIPLE KEYS
-  Session-doc (1-6): process-vocab past-narrative test-meta mirrors-x defensive paragraph-docs
-  General  (7-12+14): no-comment-default why-not-what no-header-restate no-transient
-                      no-commented-out no-bare-todo no-apology
-  Groups:             session-doc | general | all
+  Session-doc: change-narration non-local over-explained
+  General:     redundant commented-out bare-todo apology
+  Groups:      session-doc | general | all
 
 All configuration is via the flags above; set them on the --review command
 in hooks/hooks.json (or in ~/.claude/settings.json for a local-dev install).

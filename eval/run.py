@@ -15,54 +15,52 @@ WORKDIR = "/tmp/nch-eval"
 
 # principle number -> key, mirroring src/options.rs PRINCIPLES
 NUM_TO_KEY = {
-    1: "process-vocab", 2: "past-narrative", 3: "test-meta", 4: "mirrors-x",
-    5: "defensive", 6: "paragraph-docs", 7: "no-comment-default",
-    8: "why-not-what", 9: "no-header-restate", 10: "no-transient",
-    11: "no-commented-out", 12: "no-bare-todo", 14: "no-apology",
+    1: "redundant", 2: "change-narration", 3: "non-local",
+    4: "over-explained", 5: "commented-out", 6: "bare-todo", 7: "apology",
 }
 
 # Each fixture: id, ext, code (incl. the comment under test), slop?, gold category.
 # Controls (slop=False) are genuine comments that MUST NOT be flagged.
 FIXTURES = [
     # --- session-doc / change-narration (Claude-style) ---
-    {"id": "pv1", "ext": "py", "slop": True, "cat": "process-vocab",
+    {"id": "pv1", "ext": "py", "slop": True, "cat": "change-narration",
      "code": "def load(cfg):\n    # previously we read a global; now it's passed in\n    return cfg.value\n"},
-    {"id": "pv2", "ext": "ts", "slop": True, "cat": "process-vocab",
+    {"id": "pv2", "ext": "ts", "slop": True, "cat": "change-narration",
      "code": "export async function save() {\n  // the fix is to await the write here\n  await write();\n}\n"},
-    {"id": "pv3", "ext": "py", "slop": True, "cat": "process-vocab",
+    {"id": "pv3", "ext": "py", "slop": True, "cat": "change-narration",
      "code": "def handle(x):\n    # as requested, handle the empty input case\n    return x or []\n"},
-    {"id": "pn1", "ext": "go", "slop": True, "cat": "past-narrative",
+    {"id": "pn1", "ext": "go", "slop": True, "cat": "change-narration",
      "code": "package p\n\nfunc Find(k string) int {\n\t// used to return nil before we added validation\n\treturn 0\n}\n"},
-    {"id": "tm1", "ext": "py", "slop": True, "cat": "test-meta",
+    {"id": "tm1", "ext": "py", "slop": True, "cat": "change-narration",
      "code": "def test_retry():\n    # covers the third branch added above\n    assert retry() == 1\n"},
-    {"id": "mx1", "ext": "rs", "slop": True, "cat": "mirrors-x",
+    {"id": "mx1", "ext": "rs", "slop": True, "cat": "non-local",
      "code": "fn init() {\n    // mirrors init_tracing in server.rs\n    setup();\n}\n"},
     # --- over-explained ---
-    {"id": "df1", "ext": "ts", "slop": True, "cat": "defensive",
+    {"id": "df1", "ext": "ts", "slop": True, "cat": "over-explained",
      "code": "export function batch() {\n  // We deliberately retry here because the upstream is flaky and we do not\n  // want to fail the whole batch; this is belt-and-suspenders against any\n  // transient error a reviewer might worry about.\n  run();\n}\n"},
-    {"id": "pd1", "ext": "rs", "slop": True, "cat": "paragraph-docs",
+    {"id": "pd1", "ext": "rs", "slop": True, "cat": "over-explained",
      "code": "/// Computes the score.\n///\n/// This longer explanation spans several paragraphs and reads like a mini\n/// design document, walking through rationale, history, and alternatives at\n/// length rather than staying terse.\nfn score() -> i32 {\n    0\n}\n"},
     # --- redundant / obvious ---
-    {"id": "nd1", "ext": "py", "slop": True, "cat": "no-comment-default",
+    {"id": "nd1", "ext": "py", "slop": True, "cat": "redundant",
      "code": "def reset():\n    # set count to zero\n    count = 0\n    return count\n"},
-    {"id": "nd2", "ext": "ts", "slop": True, "cat": "no-comment-default",
+    {"id": "nd2", "ext": "ts", "slop": True, "cat": "redundant",
      "code": "class A {\n  // constructor\n  constructor() {}\n}\n"},
-    {"id": "wn1", "ext": "py", "slop": True, "cat": "why-not-what",
+    {"id": "wn1", "ext": "py", "slop": True, "cat": "redundant",
      "code": "def parse(raw):\n    # convert the string into a float\n    return float(raw)\n"},
-    {"id": "wn2", "ext": "ts", "slop": True, "cat": "why-not-what",
+    {"id": "wn2", "ext": "ts", "slop": True, "cat": "redundant",
      "code": "function each(users: string[]) {\n  // loop over each user\n  for (const u of users) use(u);\n}\n"},
-    {"id": "wn3", "ext": "py", "slop": True, "cat": "why-not-what",
+    {"id": "wn3", "ext": "py", "slop": True, "cat": "redundant",
      "code": "def collect():\n    # create an empty list\n    items = []\n    return items\n"},
-    {"id": "hr1", "ext": "rs", "slop": True, "cat": "no-header-restate",
+    {"id": "hr1", "ext": "rs", "slop": True, "cat": "redundant",
      "code": "// UserId - the user id\nstruct UserId(u64);\n"},
     # --- general noise ---
-    {"id": "nt1", "ext": "js", "slop": True, "cat": "no-transient",
+    {"id": "nt1", "ext": "js", "slop": True, "cat": "non-local",
      "code": "export function checkout() {\n  // added for the checkout flow, see TICKET-42\n  return true;\n}\n"},
-    {"id": "co1", "ext": "java", "slop": True, "cat": "no-commented-out",
+    {"id": "co1", "ext": "java", "slop": True, "cat": "commented-out",
      "code": "class C {\n  int f() {\n    // int old = compute();\n    return 2;\n  }\n}\n"},
-    {"id": "td1", "ext": "ts", "slop": True, "cat": "no-bare-todo",
+    {"id": "td1", "ext": "ts", "slop": True, "cat": "bare-todo",
      "code": "export function flush() {\n  // TODO: fix later\n  return;\n}\n"},
-    {"id": "ap1", "ext": "go", "slop": True, "cat": "no-apology",
+    {"id": "ap1", "ext": "go", "slop": True, "cat": "apology",
      "code": "package p\n\nfunc Hack() {\n\t// sorry, this is hacky\n}\n"},
 
     # --- controls: genuine comments that must NOT be flagged ---

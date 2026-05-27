@@ -8,7 +8,7 @@ const PROMPT_RULES: &str = r#"You are a deterministic classifier for comments in
 RULES:
 - Review ONLY comments on lines marked [NEW].
 - Lines without [NEW] are surrounding context. Use them to judge whether a [NEW] comment restates a nearby identifier. NEVER flag a comment that is not on a [NEW] line.
-- Public API docstrings (Rust /// on `pub` items, JSDoc on exported declarations, Python module-level docstrings) get a carve-out from principles 6 and 9. Do not flag those two principles against documentation on public items.
+- Public API documentation is GOOD, not a smell. NEVER flag `redundant` or `over-explained` against doc comments on exported/public items — Rust `///` on `pub` items, Go doc comments on exported (capitalized) identifiers (e.g. `// ActiveSessions returns ...`), JSDoc/TSDoc on exported declarations (`/** ... */`), and Python module/class/function docstrings — even when they restate the name; that is the required convention for those languages.
 - "Comment" means any text the language treats as a comment (// /* */ # """ etc.).
 - The input may contain multiple hunks, each introduced by a line of the form "===== HUNK <n>: <file> =====". Tag every finding with its hunk number <n>.
 
@@ -162,12 +162,12 @@ mod tests {
     #[test]
     fn principles_text_omits_disabled() {
         let opts = Options {
-            disabled: vec!["defensive".into()],
+            disabled: vec!["over-explained".into()],
             ..Options::default()
         };
         let text = principles_text(&opts);
-        assert!(!text.contains("Defensive justification"));
-        assert!(text.contains("Process vocabulary"));
+        assert!(!text.contains("Over-explained"));
+        assert!(text.contains("Change or task narration"));
     }
 
     #[test]

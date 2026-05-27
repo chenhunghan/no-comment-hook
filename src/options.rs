@@ -25,97 +25,58 @@ pub enum PrincipleGroup {
     General,
 }
 
+// Seven non-overlapping categories, aligned to the inline-comment-smell taxonomy
+// (Jabrayilzade et al., EMSE 2024) and weighted toward agent-produced comments.
+// See eval/README.md for the mapping and grounding.
 pub const PRINCIPLES: &[Principle] = &[
     Principle {
         number: 1,
-        key: "process-vocab",
-        group: PrincipleGroup::SessionDoc,
-        name: "Process vocabulary",
-        detail: "Flag comments containing words like \"Pin:\", \"pre-fix\", \"previously\", \"behavior now is\", \"the fix is\", \"reviewer's concern\", \"we now\", \"we used to\", \"as discussed\", \"after refactor\", \"before this change\". These describe a change or moment, not the code's current state.",
+        key: "redundant",
+        group: PrincipleGroup::General,
+        name: "Redundant / obvious",
+        detail: "Flag comments that add nothing beyond what the code and well-named identifiers already convey: restating what the code does (e.g. \"// increment counter\" above `counter += 1`), restating a function/type/variable name, tutorial-style explanation of basic syntax, or echoing the task (\"// add two numbers as requested\"). This is the most common agent over-commenting smell. Do NOT flag a comment that gives a non-obvious WHY the code cannot show — a constraint, edge case, performance reason, or external/library quirk; those are worth keeping. EXCEPT public API docstrings (carve-out).",
     },
     Principle {
         number: 2,
-        key: "past-narrative",
+        key: "change-narration",
         group: PrincipleGroup::SessionDoc,
-        name: "Past-tense narrative about removed code",
-        detail: "Flag comments narrating what the code used to do or what it would have done (e.g. \"The pre-fix code would have read 0 bytes\"). Code documents the present, not history.",
+        name: "Change or task narration",
+        detail: "Flag comments that narrate the edit, its history, or the author's plan instead of describing the code as it stands: process words (\"Pin:\", \"previously\", \"the fix is\", \"as discussed\", \"we now\", \"we used to\"), what the code used to do, diff commentary (\"added\", \"removed\", \"changed to async\"), \"as requested\", or a unit's role relative to other code or tests. Reset test: would it still make sense if the commit history were deleted?",
     },
     Principle {
         number: 3,
-        key: "test-meta",
+        key: "non-local",
         group: PrincipleGroup::SessionDoc,
-        name: "Meta-framing about a test's role",
-        detail: "Flag comments explaining why a test exists relative to other tests (e.g. \"Pin: the third arm of attempt_best_effort_restart\"). The test name and assertion convey purpose.",
+        name: "Non-local reference",
+        detail: "Flag comments that point to code or process outside the lines they sit on and rot when that target moves: \"mirrors X\" / \"same as Y\" cross-references, issue or PR numbers, \"added for X flow\", \"used by Y\".",
     },
     Principle {
         number: 4,
-        key: "mirrors-x",
+        key: "over-explained",
         group: PrincipleGroup::SessionDoc,
-        name: "Cross-references mirroring another module",
-        detail: "Flag comments like \"mirrors kernel.rs::init_tracing_capture\" or \"same as X / same fix\". The link rots and the parallel isn't load-bearing.",
+        name: "Over-explained",
+        detail: "Flag multi-sentence justification written at a reviewer (\"Defence-in-depth against...\", \"belt-and-suspenders: after the remap...\") or doc blocks padded into a mini design doc. Agents over-explain to show their work; keep only the load-bearing why. EXCEPT public API docs (carve-out).",
     },
     Principle {
         number: 5,
-        key: "defensive",
-        group: PrincipleGroup::SessionDoc,
-        name: "Defensive justification > 1-2 sentences",
-        detail: "Flag multi-sentence justification anticipating reviewer pushback (e.g. \"Defence-in-depth against...\", \"Belt-and-suspenders: after the remap...\"). Belongs in the PR description.",
+        key: "commented-out",
+        group: PrincipleGroup::General,
+        name: "Commented-out code",
+        detail: "Flag code that has been commented out rather than deleted. Git remembers.",
     },
     Principle {
         number: 6,
-        key: "paragraph-docs",
-        group: PrincipleGroup::SessionDoc,
-        name: "Paragraph-shape doc comments on functions/types",
-        detail: "Flag /// or \"\"\" doc blocks with multiple sub-paragraphs treating the comment as a mini design doc. EXCEPT on public API items (carve-out).",
+        key: "bare-todo",
+        group: PrincipleGroup::General,
+        name: "Bare TODO/FIXME",
+        detail: "Flag TODO/FIXME/XXX comments that lack a tracked ticket reference or a concrete description of the work.",
     },
     Principle {
         number: 7,
-        key: "no-comment-default",
+        key: "apology",
         group: PrincipleGroup::General,
-        name: "Default to no comment",
-        detail: "Flag comments that don't add information beyond what well-named identifiers and the code itself already convey.",
-    },
-    Principle {
-        number: 8,
-        key: "why-not-what",
-        group: PrincipleGroup::General,
-        name: "WHY, not WHAT",
-        detail: "Flag comments restating what the code does rather than explaining why (e.g. \"// Increment counter\" above `counter += 1`).",
-    },
-    Principle {
-        number: 9,
-        key: "no-header-restate",
-        group: PrincipleGroup::General,
-        name: "No header comments restating the name",
-        detail: "Flag comments that just restate the function/type/module name (e.g. \"// User service - handles users\"). EXCEPT public API docstrings (carve-out).",
-    },
-    Principle {
-        number: 10,
-        key: "no-transient",
-        group: PrincipleGroup::General,
-        name: "No transient context",
-        detail: "Flag comments referencing issue numbers, PR numbers, \"added for X flow\", \"used by Y\" - these rot as the codebase evolves and belong in commit/PR messages.",
-    },
-    Principle {
-        number: 11,
-        key: "no-commented-out",
-        group: PrincipleGroup::General,
-        name: "No commented-out code",
-        detail: "Flag any code that has been commented out rather than deleted. Git remembers.",
-    },
-    Principle {
-        number: 12,
-        key: "no-bare-todo",
-        group: PrincipleGroup::General,
-        name: "No bare TODO/FIXME",
-        detail: "Flag TODO/FIXME/XXX comments that lack a tracked ticket reference or concrete description of the work.",
-    },
-    Principle {
-        number: 14,
-        key: "no-apology",
-        group: PrincipleGroup::General,
-        name: "Don't apologize",
-        detail: "Flag self-deprecating comments like \"// hacky\", \"// I know this is ugly\", \"// sorry about this\". Fix it or name the constraint.",
+        name: "Apology / hedging",
+        detail: "Flag self-deprecating or hedging comments like \"// hacky\", \"// I know this is ugly\", \"// sorry\", \"// simplified version\". Fix it or name the constraint.",
     },
 ];
 
@@ -251,8 +212,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn defaults_have_thirteen_principles() {
-        assert_eq!(PRINCIPLES.len(), 13);
+    fn defaults_have_seven_principles() {
+        assert_eq!(PRINCIPLES.len(), 7);
         let o = Options::default();
         for p in PRINCIPLES {
             assert!(o.is_enabled(p.key));
@@ -262,18 +223,18 @@ mod tests {
     #[test]
     fn disable_single() {
         let mut o = Options::default();
-        apply_args(&mut o, &["--disable=defensive".to_string()]);
-        assert!(!o.is_enabled("defensive"));
-        assert!(o.is_enabled("process-vocab"));
+        apply_args(&mut o, &["--disable=over-explained".to_string()]);
+        assert!(!o.is_enabled("over-explained"));
+        assert!(o.is_enabled("change-narration"));
     }
 
     #[test]
     fn disable_group_session_doc() {
         let mut o = Options::default();
         apply_args(&mut o, &["--disable=session-doc".to_string()]);
-        assert!(!o.is_enabled("process-vocab"));
-        assert!(!o.is_enabled("paragraph-docs"));
-        assert!(o.is_enabled("no-comment-default"));
+        assert!(!o.is_enabled("change-narration"));
+        assert!(!o.is_enabled("over-explained"));
+        assert!(o.is_enabled("redundant"));
     }
 
     #[test]
@@ -282,11 +243,11 @@ mod tests {
         apply_args(
             &mut o,
             &[
-                "--disable=defensive".to_string(),
-                "--enable=defensive".to_string(),
+                "--disable=over-explained".to_string(),
+                "--enable=over-explained".to_string(),
             ],
         );
-        assert!(o.is_enabled("defensive"));
+        assert!(o.is_enabled("over-explained"));
     }
 
     #[test]
@@ -295,11 +256,11 @@ mod tests {
         apply_args(
             &mut o,
             &[
-                "--disable=defensive".to_string(),
-                "--disable=defensive,defensive".to_string(),
+                "--disable=over-explained".to_string(),
+                "--disable=over-explained,over-explained".to_string(),
             ],
         );
-        let count = o.disabled.iter().filter(|d| *d == "defensive").count();
+        let count = o.disabled.iter().filter(|d| *d == "over-explained").count();
         assert_eq!(count, 1);
     }
 

@@ -10,15 +10,15 @@ We make two claims and validate each with the rigor the comment-smell literature
 Our `--disable` keys map onto the established 11-type inline-comment-smell taxonomy
 (Jabrayilzade et al., *Taxonomy of Inline Code Comment Smells*, EMSE 2024):
 
-| Our key(s) | Taxonomy type | Working definition |
+| Our key | Taxonomy type | Working definition |
 |---|---|---|
-| `no-comment-default`, `why-not-what`, `no-header-restate` | **obvious** | comment fully inferable from the code (CRAIC's "entailment from code") |
-| `process-vocab`, `past-narrative`, `test-meta` | **irrelevant** | about the edit/history/role, not the code as it stands |
-| `mirrors-x`, `no-transient` | **non-local** | references code/issues outside the immediate scope |
-| `defensive`, `paragraph-docs` | **too-much-information** / **vague** | exceeds the detail needed; reads like a mini design doc |
-| `no-commented-out` | **commented-out code** | code left in a comment |
-| `no-bare-todo` | **task** | TODO/FIXME without a tracked, concrete item |
-| `no-apology` | (Clean Code "don't excuse bad code") | self-deprecating / hedging |
+| `redundant` | **obvious** | comment fully inferable from the code (CRAIC's "entailment from code"); genuine *why* is kept |
+| `change-narration` | **irrelevant** | about the edit/history/role, not the code as it stands |
+| `non-local` | **non-local** | references code/issues outside the immediate scope |
+| `over-explained` | **too-much-information** / **vague** | exceeds the detail needed; reads like a mini design doc |
+| `commented-out` | **commented-out code** | code left in a comment |
+| `bare-todo` | **task** | TODO/FIXME without a tracked, concrete item |
+| `apology` | (Clean Code "don't excuse bad code") | self-deprecating / hedging |
 
 Deliberately excluded: `misleading` (needs code-vs-comment context we don't have),
 `no-comment-on-non-obvious` (inverse problem), `attribution` / `beautification`

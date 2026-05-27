@@ -132,10 +132,10 @@ mod tests {
 
     #[test]
     fn parse_findings_handles_string_principle() {
-        let claude = r#"{"result":"{\"findings\":[{\"hunk\":1,\"principle\":\"test-meta\",\"quote\":\"// x\",\"why\":\"y\"}]}"}"#;
+        let claude = r#"{"result":"{\"findings\":[{\"hunk\":1,\"principle\":\"change-narration\",\"quote\":\"// x\",\"why\":\"y\"}]}"}"#;
         let f = parse_findings(claude, &one("/x.rs"));
         assert_eq!(f.len(), 1);
-        assert!(f[0].contains("principle test-meta"));
+        assert!(f[0].contains("principle change-narration"));
     }
 
     #[test]

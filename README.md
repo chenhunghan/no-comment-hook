@@ -37,33 +37,27 @@ It works out of the box — the defaults are sensible, so most people change not
 Everything is configured with flags on the hook command. To customize, add flags to the `--review` line in `hooks/hooks.json`:
 
 ```jsonc
-"command": "${CLAUDE_PLUGIN_ROOT}/bin/no-comment-hook --review --disable=defensive --effort=medium"
+"command": "${CLAUDE_PLUGIN_ROOT}/bin/no-comment-hook --review --disable=over-explained --effort=medium"
 ```
 
-**Turn off checks** with `--disable=` (comma-separated) — by key, or by group name (`session-doc`, `general`, `all`). e.g. `--disable=defensive,no-bare-todo` or `--disable=session-doc`.
+**Turn off checks** with `--disable=` (comma-separated) — by key, or by group name (`session-doc`, `general`, `all`). e.g. `--disable=over-explained,bare-todo` or `--disable=session-doc`.
 
 The **`session-doc`** group flags comments about the *change you just made* — the kind that go stale once the commit lands:
 
 | Key | Flags comments that… |
 |---|---|
-| `process-vocab` | use change-words: "Pin:", "previously", "the fix is", "as discussed" |
-| `past-narrative` | describe what the code *used to* do |
-| `test-meta` | explain why a test exists relative to other tests |
-| `mirrors-x` | point elsewhere: "mirrors X", "same as Y" |
-| `defensive` | argue a point to a reviewer over several sentences |
-| `paragraph-docs` | read like a mini design doc on a function/type |
+| `change-narration` | narrate the edit/history/plan: "previously", "the fix is", "as requested", "changed to async", or a test's role |
+| `non-local` | point elsewhere and rot: "mirrors X", "same as Y", issue/PR refs, "added for X flow" |
+| `over-explained` | argue to a reviewer over several sentences, or read like a mini design doc |
 
 The **`general`** group flags low-value comments:
 
 | Key | Flags comments that… |
 |---|---|
-| `no-comment-default` | add nothing the code doesn't already say |
-| `why-not-what` | restate *what* the code does (`// increment counter`) |
-| `no-header-restate` | restate a function/type name (`// UserCache - caches users`) |
-| `no-transient` | reference issues/PRs or "added for X flow" |
-| `no-commented-out` | are commented-out code |
-| `no-bare-todo` | are a bare `TODO`/`FIXME` with no detail |
-| `no-apology` | apologize (`// sorry, this is hacky`) |
+| `redundant` | add nothing over the code/name — restating *what* it does, the name, or basic syntax (`// increment counter`). Genuine *why* comments are kept |
+| `commented-out` | are commented-out code |
+| `bare-todo` | are a bare `TODO`/`FIXME` with no detail |
+| `apology` | apologize or hedge (`// sorry, this is hacky`) |
 
 **All flags:**
 
