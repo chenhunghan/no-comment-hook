@@ -25,9 +25,7 @@ pub enum PrincipleGroup {
     General,
 }
 
-// Seven non-overlapping categories, aligned to the inline-comment-smell taxonomy
-// (Jabrayilzade et al., EMSE 2024) and weighted toward agent-produced comments.
-// See eval/README.md for the mapping and grounding.
+// Categories from the inline-comment-smell taxonomy, weighted toward agent-produced comments.
 pub const PRINCIPLES: &[Principle] = &[
     Principle {
         number: 1,
