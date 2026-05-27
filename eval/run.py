@@ -89,6 +89,13 @@ FIXTURES = [
      "code": "class User {\n  /** Returns the user's display name. */\n  public String displayName() {\n    return name;\n  }\n}\n"},
     {"id": "c_doc_py", "ext": "py", "slop": False, "cat": None,
      "code": "def daily_revenue(rows):\n    \"\"\"Roll up orders into daily revenue totals.\"\"\"\n    return sum(rows)\n"},
+    # Clean Code "good comments" that must be kept
+    {"id": "c_todo", "ext": "ts", "slop": False, "cat": None,
+     "code": "export function list() {\n  // TODO(#1234): handle pagination once the API supports cursors\n  return all();\n}\n"},
+    {"id": "c_warn", "ext": "go", "slop": False, "cat": None,
+     "code": "package p\n\nfunc Drain() {\n\t// Don't call on the main thread: this blocks until the socket drains\n\tblock()\n}\n"},
+    {"id": "c_amp", "ext": "py", "slop": False, "cat": None,
+     "code": "def parse(line):\n    # The trim is critical: a trailing space breaks the downstream parser\n    return line.strip()\n"},
     {"id": "c_apib_rs", "ext": "rs", "slop": False, "cat": None,
      "code": "/// Resolve the principle, given as its number or its key, and report whether\n/// it is enabled. Unknown values are treated as enabled.\npub fn principle_enabled(&self, p: &str) -> bool {\n    true\n}\n"},
     {"id": "c_apib_ts", "ext": "ts", "slop": False, "cat": None,

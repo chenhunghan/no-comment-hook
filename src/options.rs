@@ -31,7 +31,7 @@ pub const PRINCIPLES: &[Principle] = &[
         key: "redundant",
         group: PrincipleGroup::General,
         name: "Redundant / obvious",
-        detail: "Flag comments that add nothing beyond what the code and well-named identifiers already convey: restating what the code does (e.g. \"// increment counter\" above `counter += 1`), restating a function/type/variable name, tutorial-style explanation of basic syntax, or echoing the task (\"// add two numbers as requested\"). This is the most common agent over-commenting smell. Do NOT flag a comment that gives a non-obvious WHY the code cannot show — a constraint, edge case, performance reason, or external/library quirk; those are worth keeping. EXCEPT public API docstrings (carve-out).",
+        detail: "Flag comments that add nothing beyond what the code and well-named identifiers already convey: restating what the code does (e.g. \"// increment counter\" above `counter += 1`), restating a function/type/variable name, tutorial-style explanation of basic syntax, or echoing the task (\"// add two numbers as requested\"). This is the most common agent over-commenting smell. Do NOT flag a comment that gives a non-obvious WHY the code cannot show — a constraint, edge case, ordering/timing/threading requirement, performance reason, or external/library quirk. A comment that names an action AND its reason (e.g. \"Lock before the read: the writer can resize the buffer mid-call\") is such a WHY; keep it — leading with the action does not make it redundant. EXCEPT public API docstrings (carve-out).",
     },
     Principle {
         number: 2,
@@ -117,17 +117,19 @@ impl Options {
         PRINCIPLES.iter().any(|p| self.is_enabled(p.key))
     }
 
-    /// The reviewer may emit a principle as its number or its key; resolve either
-    /// and report whether it is enabled. Unknown values are treated as enabled so
-    /// unexpected output is surfaced rather than silently dropped.
+    /// Whether a finding's principle (emitted as its number or key) is enabled.
+    /// An unrecognized principle is treated as disabled, so malformed findings drop.
     pub fn principle_enabled(&self, principle: &str) -> bool {
-        let key = match principle.parse::<u32>() {
+        let resolved = match principle.parse::<u32>() {
             Ok(n) => PRINCIPLES.iter().find(|p| p.number == n).map(|p| p.key),
-            Err(_) => Some(principle),
+            Err(_) => PRINCIPLES
+                .iter()
+                .find(|p| p.key.eq_ignore_ascii_case(principle.trim()))
+                .map(|p| p.key),
         };
-        match key {
+        match resolved {
             Some(k) => self.is_enabled(k),
-            None => true,
+            None => false,
         }
     }
 }
@@ -251,7 +253,7 @@ mod tests {
         assert!(!o.principle_enabled("redundant"));
         assert!(o.principle_enabled("2")); // change-narration still on
         assert!(o.principle_enabled("change-narration"));
-        assert!(o.principle_enabled("99")); // unknown number stays enabled
+        assert!(!o.principle_enabled("99")); // unrecognized principle dropped
     }
 
     #[test]
