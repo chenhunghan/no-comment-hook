@@ -25,7 +25,6 @@ pub enum PrincipleGroup {
     General,
 }
 
-// Categories from the inline-comment-smell taxonomy, weighted toward agent-produced comments.
 pub const PRINCIPLES: &[Principle] = &[
     Principle {
         number: 1,
