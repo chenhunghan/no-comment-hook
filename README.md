@@ -34,11 +34,13 @@ Every check is listed individually — and can be turned off — under [Configur
 
 It works out of the box — the defaults are sensible, so most people change nothing.
 
-Everything is configured with flags on the hook command. To customize, add flags to the `--review` line in `hooks/hooks.json`:
+Configuration is via flags on the hook's `--review` command, e.g.:
 
 ```jsonc
 "command": "${CLAUDE_PLUGIN_ROOT}/bin/no-comment-hook --review --disable=over-explained --effort=medium"
 ```
+
+On the published plugin, edit that line in its bundled `hooks/hooks.json` (note: reset on each update). For flags that persist across updates, use `make install-local` (see [Development](#development)) — it runs the hook from your own `~/.claude/settings.json`, where the flags stay yours.
 
 **Turn off checks** with `--disable=` (comma-separated) — by key, or by group name (`session-doc`, `general`, `all`). e.g. `--disable=over-explained,bare-todo` or `--disable=session-doc`.
 
