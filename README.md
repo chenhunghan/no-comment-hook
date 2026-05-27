@@ -2,9 +2,7 @@
 
 **Stop your AI coding agent from leaving throwaway comments in your code.**
 
-Coding agents love to narrate. They leave comments explaining the *change they just made* — `// previously this used a mutex`, `// the fix is to retry`, `// TODO: handle this later`, `// increment the counter` — instead of comments that help the next person read the code. Those notes are useful for about five minutes, then they rot.
-
-This Claude Code plugin reviews every comment your agent writes and, when one is noise, asks the agent to fix or delete it **before it lands in a commit**. It runs automatically in the background after each turn. If your comments are fine, you never notice it.
+AI-generated code carries maintainability debt that [persists in shipped repositories](https://arxiv.org/html/2603.28592v2), and redundant or edit-narrating comments (`// the fix is…`, `// increment the counter`) are a [well-studied smell](https://arxiv.org/html/2504.18956v1) in their own right. This Claude Code plugin reviews each comment your agent writes and asks it to fix or delete the noise **before it lands** — automatically after each turn, and silent when your comments are fine. [See how the checks are grounded](#the-checks).
 
 > Sibling project: [ralph-hook-lint](https://github.com/chenhunghan/ralph-hook-lint) (auto-lint hook).
 
@@ -14,10 +12,6 @@ This Claude Code plugin reviews every comment your agent writes and, when one is
 claude plugin marketplace add https://github.com/chenhunghan/no-comment-hook.git
 claude plugin install no-comment-hook
 ```
-
-Restart Claude Code. The plugin downloads the right binary for your platform on first start (macOS & Linux, arm64 & x86_64) and keeps it up to date automatically. No API key needed — it uses your existing Claude Code login.
-
-> Requires Claude Code with background-rewake hook support (January 2026 or later).
 
 ## What it flags
 
