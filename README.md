@@ -28,7 +28,29 @@ Two kinds of comment that agents tend to add:
 
 **Left alone:** genuine *why* comments and public API docs (Rust `///`, JSDoc, Go exported-symbol comments, Python docstrings). Works across Rust, TypeScript/JavaScript, Python, Go, Java, C/C++, Ruby, Swift, Kotlin, Scala, C#, and PHP.
 
-Every check is listed individually — and can be turned off — under [Configure](#configure).
+Each check is defined below, with its source; turn any off under [Configure](#configure).
+
+## The checks
+
+Each check maps to an established comment *smell* — drawn from **Clean Code** (the industry-standard treatment of good vs. bad comments) and **2025–2026 research on AI-generated code "slop"** — then weighted toward how *agents* actually comment. Public-API documentation and genuine *why* comments are kept: they earn their place.
+
+| Key | Flags a comment that… | Grounded in |
+|---|---|---|
+| `redundant` | repeats what the code, name, or signature already says — including tutorial-style explanation of basic syntax (`// increment counter`) | Clean Code (Redundant / Noise); over-commenting is the most-documented LLM-slop pattern |
+| `change-narration` | narrates the *edit*, its history, or the plan rather than the code as it stands ("the fix is", "previously", "as requested", "changed to async") | the diff-narration agents show in the AI-slop studies; cf. Clean Code (Journal Comments) |
+| `non-local` | points to code or process outside the lines it sits on ("mirrors X", "same as Y", issue/PR refs, "added for X flow") | Clean Code (Nonlocal Information) |
+| `over-explained` | argues to a reviewer over several sentences, or reads like a mini design doc | Clean Code (Too Much Information / Mumbling) |
+| `commented-out` | is code left in a comment instead of deleted | Clean Code (Commented-Out Code) |
+| `bare-todo` | is a `TODO`/`FIXME` with no tracked ticket or concrete detail | Clean Code (TODO Comments) |
+| `apology` | apologizes or hedges (`// hacky`, `// sorry`, `// simplified version`) | Clean Code ("don't comment bad code — rewrite it") |
+
+### References
+
+- Robert C. Martin — *Clean Code: A Handbook of Agile Software Craftsmanship* (Pearson, 2008): [official page](https://www.informit.com/store/clean-code-a-handbook-of-agile-software-craftsmanship-9780132350884).
+- *AI-Generated Smells: Code and Architecture in LLM- and Agent-Driven Development* (2026): [arxiv.org/html/2605.02741](https://arxiv.org/html/2605.02741) — agent slop is volume-driven and resists better prompting.
+- *Debt Behind the AI Boom: A Large-Scale Empirical Study of AI-Generated Code in the Wild* (2026): [arxiv.org/html/2603.28592v2](https://arxiv.org/html/2603.28592v2) — AI-introduced issues persist in shipped code.
+- *Code Copycat: Demystifying Repetition in LLM-based Code Generation* (2025): [arxiv.org/html/2504.12608v1](https://arxiv.org/html/2504.12608v1) — repetition is pervasive, including duplicated comments.
+- *Towards Automated Detection of Inline Code Comment Smells* (2025): [arxiv.org/html/2504.18956v1](https://arxiv.org/html/2504.18956v1) — the inline-comment-smell taxonomy these categories map to.
 
 ## Configure
 
@@ -42,24 +64,11 @@ Configuration is via flags on the hook's `--review` command, e.g.:
 
 On the published plugin, edit that line in its bundled `hooks/hooks.json` (note: reset on each update). For flags that persist across updates, use `make install-local` (see [Development](#development)) — it runs the hook from your own `~/.claude/settings.json`, where the flags stay yours.
 
-**Turn off checks** with `--disable=` (comma-separated) — by key, or by group name (`session-doc`, `general`, `all`). e.g. `--disable=over-explained,bare-todo` or `--disable=session-doc`.
+**Turn off checks** with `--disable=` (comma-separated) — by key or by group, e.g. `--disable=over-explained,bare-todo` or `--disable=session-doc`. See [The checks](#the-checks) for what each one means.
 
-The **`session-doc`** group flags comments about the *change you just made* — the kind that go stale once the commit lands:
-
-| Key | Flags comments that… |
-|---|---|
-| `change-narration` | narrate the edit/history/plan: "previously", "the fix is", "as requested", "changed to async", or a test's role |
-| `non-local` | point elsewhere and rot: "mirrors X", "same as Y", issue/PR refs, "added for X flow" |
-| `over-explained` | argue to a reviewer over several sentences, or read like a mini design doc |
-
-The **`general`** group flags low-value comments:
-
-| Key | Flags comments that… |
-|---|---|
-| `redundant` | add nothing over the code/name — restating *what* it does, the name, or basic syntax (`// increment counter`). Genuine *why* comments are kept |
-| `commented-out` | are commented-out code |
-| `bare-todo` | are a bare `TODO`/`FIXME` with no detail |
-| `apology` | apologize or hedge (`// sorry, this is hacky`) |
+- **`session-doc`** group: `change-narration`, `non-local`, `over-explained`
+- **`general`** group: `redundant`, `commented-out`, `bare-todo`, `apology`
+- **`all`**: every check
 
 **All flags:**
 

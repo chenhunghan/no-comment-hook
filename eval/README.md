@@ -69,3 +69,8 @@ Agent-generated code quality (open, arXiv full-text):
   [arxiv.org/html/2605.02741](https://arxiv.org/html/2605.02741).
 - Liu et al. — *Debt Behind the AI Boom* —
   [arxiv.org/html/2603.28592v2](https://arxiv.org/html/2603.28592v2).
+
+Comment standards (book):
+
+- Robert C. Martin — *Clean Code: A Handbook of Agile Software Craftsmanship* (Pearson, 2008) —
+  [official page](https://www.informit.com/store/clean-code-a-handbook-of-agile-software-craftsmanship-9780132350884).
