@@ -10,7 +10,7 @@ AI-generated code carries maintainability debt that [persists in shipped reposit
 
 ```bash
 claude plugin marketplace add https://github.com/chenhunghan/no-comment-hook.git
-claude plugin install no-comment-hook
+claude plugin install no-comment-hook@no-comment-hook
 ```
 
 ## The checks
@@ -30,9 +30,9 @@ Each check maps to an established comment *smell* — from [Clean Code][cc] (the
 ### References
 
 - Robert C. Martin — *Clean Code: A Handbook of Agile Software Craftsmanship* (Pearson, 2008): [official page](https://www.informit.com/store/clean-code-a-handbook-of-agile-software-craftsmanship-9780132350884).
-- *AI-Generated Smells: Code and Architecture in LLM- and Agent-Driven Development* (2026): [arxiv.org/html/2605.02741](https://arxiv.org/html/2605.02741) — agent slop is volume-driven and resists better prompting.
+- *AI-Generated Smells: An Analysis of Code and Architecture in LLM- and Agent-Driven Development* (2026): [arxiv.org/html/2605.02741](https://arxiv.org/html/2605.02741) — agent slop is volume-driven and resists better prompting.
 - *Debt Behind the AI Boom: A Large-Scale Empirical Study of AI-Generated Code in the Wild* (2026): [arxiv.org/html/2603.28592v2](https://arxiv.org/html/2603.28592v2) — AI-introduced issues persist in shipped code.
-- *Code Copycat: Demystifying Repetition in LLM-based Code Generation* (2025): [arxiv.org/html/2504.12608v1](https://arxiv.org/html/2504.12608v1) — repetition is pervasive, including duplicated comments.
+- *Code Copycat Conundrum: Demystifying Repetition in LLM-based Code Generation* (2025): [arxiv.org/html/2504.12608v1](https://arxiv.org/html/2504.12608v1) — repetition is pervasive, including duplicated comments.
 - *Towards Automated Detection of Inline Code Comment Smells* (2025): [arxiv.org/html/2504.18956v1](https://arxiv.org/html/2504.18956v1) — the inline-comment-smell taxonomy these categories map to.
 
 ## Configure
@@ -74,7 +74,7 @@ Run `no-comment-hook --help` for the full list.
 
 - **It never breaks your session.** If anything goes wrong (offline, timeout, rate limit), it stays silent and lets you keep working.
 - **It's fast and out of your way.** Reviews run after your turn finishes (~2–3s), and only when you actually wrote comments — so it doesn't block you.
-- **Your code stays local.** Only the comment + a few lines of surrounding context are sent to the review model, the same way any `claude -p` call works.
+- **Your code stays local.** Only the comment and its surrounding code are sent to the review model — never your whole codebase — the same way any `claude -p` call works.
 
 ## Update / Uninstall
 
