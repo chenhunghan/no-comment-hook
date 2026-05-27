@@ -46,15 +46,30 @@ Everything is configured with flags on the hook command. To customize, add flags
 "command": "${CLAUDE_PLUGIN_ROOT}/bin/no-comment-hook --review --disable=defensive --effort=medium"
 ```
 
-> Installed the published plugin? That file lives in the plugin cache and is overwritten on update. For settings that stick, use the local-dev install (see [Development](#development)) and edit the command in `~/.claude/settings.json`.
+**Turn off checks** with `--disable=` (comma-separated) — by key, or by group name (`session-doc`, `general`, `all`). e.g. `--disable=defensive,no-bare-todo` or `--disable=session-doc`.
 
-**Turn off checks** — individually or by group, with `--disable=` (comma-separated), e.g. `--disable=defensive,no-bare-todo` or `--disable=session-doc`:
+The **`session-doc`** group flags comments about the *change you just made* — the kind that go stale once the commit lands:
 
-| Group | Checks |
+| Key | Flags comments that… |
 |---|---|
-| `session-doc` | `process-vocab`, `past-narrative`, `test-meta`, `mirrors-x`, `defensive`, `paragraph-docs` |
-| `general` | `no-comment-default`, `why-not-what`, `no-header-restate`, `no-transient`, `no-commented-out`, `no-bare-todo`, `no-apology` |
-| `all` | everything |
+| `process-vocab` | use change-words: "Pin:", "previously", "the fix is", "as discussed" |
+| `past-narrative` | describe what the code *used to* do |
+| `test-meta` | explain why a test exists relative to other tests |
+| `mirrors-x` | point elsewhere: "mirrors X", "same as Y" |
+| `defensive` | argue a point to a reviewer over several sentences |
+| `paragraph-docs` | read like a mini design doc on a function/type |
+
+The **`general`** group flags low-value comments:
+
+| Key | Flags comments that… |
+|---|---|
+| `no-comment-default` | add nothing the code doesn't already say |
+| `why-not-what` | restate *what* the code does (`// increment counter`) |
+| `no-header-restate` | restate a function/type name (`// UserCache - caches users`) |
+| `no-transient` | reference issues/PRs or "added for X flow" |
+| `no-commented-out` | are commented-out code |
+| `no-bare-todo` | are a bare `TODO`/`FIXME` with no detail |
+| `no-apology` | apologize (`// sorry, this is hacky`) |
 
 **All flags:**
 
