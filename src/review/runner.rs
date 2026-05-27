@@ -60,6 +60,17 @@ fn invoke_claude(system: &str, user: &str, opts: &Options) -> Option<String> {
             &opts.effort,
             "--system-prompt",
             system,
+            // Headless classifier: skip the agent startup we don't need. No
+            // settings (so no hooks/plugin-sync — avoids re-running our own
+            // SessionStart), no MCP servers, no session files on disk. Auth
+            // still comes from the keychain, so OAuth keeps working (unlike
+            // --bare, which would force an API key).
+            "--setting-sources",
+            "",
+            "--strict-mcp-config",
+            "--mcp-config",
+            "{\"mcpServers\":{}}",
+            "--no-session-persistence",
         ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
