@@ -89,7 +89,6 @@ FIXTURES = [
      "code": "class User {\n  /** Returns the user's display name. */\n  public String displayName() {\n    return name;\n  }\n}\n"},
     {"id": "c_doc_py", "ext": "py", "slop": False, "cat": None,
      "code": "def daily_revenue(rows):\n    \"\"\"Roll up orders into daily revenue totals.\"\"\"\n    return sum(rows)\n"},
-    # borderline public-API docs: restate the name and/or run multi-sentence
     {"id": "c_apib_rs", "ext": "rs", "slop": False, "cat": None,
      "code": "/// Resolve the principle, given as its number or its key, and report whether\n/// it is enabled. Unknown values are treated as enabled.\npub fn principle_enabled(&self, p: &str) -> bool {\n    true\n}\n"},
     {"id": "c_apib_ts", "ext": "ts", "slop": False, "cat": None,
