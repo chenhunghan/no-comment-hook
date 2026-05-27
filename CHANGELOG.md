@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.4.0...no-comment-hook-v0.4.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* never surface disabled principles; skip review when all are disabled ([3c9968c](https://github.com/chenhunghan/no-comment-hook/commit/3c9968c26bca8956e01488999311b0682dfdd81f))
+
 ## [0.4.0](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.3.0...no-comment-hook-v0.4.0) (2026-05-27)
 
 
