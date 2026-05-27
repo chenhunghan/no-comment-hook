@@ -1,7 +1,7 @@
 {
   "name": "no-comment-hook",
   "description": "Reviews newly-written comments each turn against good-comment principles via claude -p",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "author": {
     "name": "Hung-Han Chen",
     "email": "chenhungh@gmail.com"
