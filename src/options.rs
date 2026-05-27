@@ -66,7 +66,7 @@ pub const PRINCIPLES: &[Principle] = &[
         key: "bare-todo",
         group: PrincipleGroup::General,
         name: "Bare TODO/FIXME",
-        detail: "Flag TODO/FIXME/XXX comments that lack a tracked ticket reference or a concrete description of the work.",
+        detail: "Flag a TODO/FIXME/XXX only when it has no actionable content: no tracking ticket and no concrete next step (e.g. \"// TODO: fix later\", \"// FIXME\"). A TODO that cites a tracking ticket (e.g. (#1234)) or states a concrete next step is acceptable — keep it.",
     },
     Principle {
         number: 7,
