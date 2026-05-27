@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.4.1...no-comment-hook-v0.4.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* keep action+reason comments; drop malformed principle findings ([d263984](https://github.com/chenhunghan/no-comment-hook/commit/d263984bcd6d3b2051d98fe5acae822f675b84af))
+* keep actionable TODOs; flag only bare ones ([2c10f1a](https://github.com/chenhunghan/no-comment-hook/commit/2c10f1a0daed577796a7da330f3ca6b0afb4a452))
+
 ## [0.4.1](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.4.0...no-comment-hook-v0.4.1) (2026-05-27)
 
 
