@@ -253,7 +253,7 @@ mod tests {
         assert!(!o.principle_enabled("redundant"));
         assert!(o.principle_enabled("2")); // change-narration still on
         assert!(o.principle_enabled("change-narration"));
-        assert!(!o.principle_enabled("99")); // unrecognized principle dropped
+        assert!(!o.principle_enabled("99"));
     }
 
     #[test]
