@@ -21,20 +21,14 @@ Restart Claude Code. The plugin downloads the right binary for your platform on 
 
 ## What it flags
 
-**Change-narrative** — comments about the edit, not the code:
-- "previously / the fix is / as discussed / we now…"
-- what the code *used to* do
-- "mirrors X" / "same as Y" cross-references
-- issue or PR references ("added for #1234")
-- commented-out code
+Two kinds of comment that agents tend to add:
 
-**Low-value noise:**
-- comments that just restate the code or a name (`// increment counter`, `// UserCache - caches users`)
-- bare `TODO` / `FIXME` with no detail
-- apologies (`// sorry, this is hacky`)
-- reviewer-aimed justification paragraphs
+- **Change-narrative** — notes about the *edit*, not the code: "previously…", "the fix is…", what the code used to do, commented-out leftovers, issue/PR references. Reads fine today, rots tomorrow.
+- **Low-value noise** — comments that just restate the code or a name, bare `TODO`/`FIXME`, or apologies like `// sorry, this is hacky`.
 
-**Left alone:** genuine *why* comments, and public API docs (Rust `///`, JSDoc, Go exported-symbol comments, Python docstrings). Works across Rust, TypeScript/JavaScript, Python, Go, Java, C/C++, Ruby, Swift, Kotlin, Scala, C#, and PHP.
+**Left alone:** genuine *why* comments and public API docs (Rust `///`, JSDoc, Go exported-symbol comments, Python docstrings). Works across Rust, TypeScript/JavaScript, Python, Go, Java, C/C++, Ruby, Swift, Kotlin, Scala, C#, and PHP.
+
+Every check is listed individually — and can be turned off — under [Configure](#configure).
 
 ## Configure
 
