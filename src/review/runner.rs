@@ -43,13 +43,25 @@ fn review_hunk(hunk: &Hunk, opts: &Options) -> Vec<String> {
 }
 
 fn invoke_claude(prompt: &str, opts: &Options) -> Option<String> {
-    let mut child = Command::new(&opts.claude_bin)
-        .args(["-p", "--output-format=json", "--model", &opts.model])
+    let mut command = Command::new(&opts.claude_bin);
+    command
+        .args([
+            "-p",
+            "--output-format=json",
+            "--model",
+            &opts.model,
+            "--tools",
+            "",
+            "--effort",
+            &opts.effort,
+        ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .spawn()
-        .ok()?;
+        .stderr(Stdio::null());
+    if opts.effort.eq_ignore_ascii_case("low") {
+        command.env("MAX_THINKING_TOKENS", "0");
+    }
+    let mut child = command.spawn().ok()?;
 
     if let Some(mut stdin) = child.stdin.take() {
         let _ = stdin.write_all(prompt.as_bytes());

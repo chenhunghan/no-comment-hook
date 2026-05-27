@@ -4,6 +4,7 @@ pub struct Options {
     pub source_ext: Vec<String>,
     pub disabled: Vec<String>,
     pub model: String,
+    pub effort: String,
     pub context_lines: usize,
     pub timeout_secs: u64,
     pub max_parallel: usize,
@@ -134,6 +135,7 @@ impl Default for Options {
                 .collect(),
             disabled: Vec::new(),
             model: "claude-haiku-4-5".to_string(),
+            effort: "low".to_string(),
             context_lines: 5,
             timeout_secs: 60,
             max_parallel: 4,
@@ -165,6 +167,8 @@ fn apply_args(o: &mut Options, args: &[String]) {
             remove_disabled(o, v);
         } else if let Some(v) = arg.strip_prefix("--model=") {
             o.model = v.to_string();
+        } else if let Some(v) = arg.strip_prefix("--effort=") {
+            o.effort = v.to_string();
         } else if let Some(v) = arg.strip_prefix("--context-lines=") {
             if let Ok(n) = v.parse() {
                 o.context_lines = n;
@@ -193,6 +197,7 @@ const ENV_APPLIERS: &[(&str, EnvApplier)] = &[
     ("NO_COMMENT_HOOK_DISABLE", |v, o| push_disabled(o, v)),
     ("NO_COMMENT_HOOK_ENABLE", |v, o| remove_disabled(o, v)),
     ("NO_COMMENT_HOOK_MODEL", |v, o| o.model = v.to_string()),
+    ("NO_COMMENT_HOOK_EFFORT", |v, o| o.effort = v.to_string()),
     ("NO_COMMENT_HOOK_CONTEXT_LINES", |v, o| {
         if let Ok(n) = v.parse() {
             o.context_lines = n;
@@ -365,6 +370,18 @@ mod tests {
         let mut o = Options::default();
         apply_args(&mut o, &["--model=claude-sonnet-4-6".to_string()]);
         assert_eq!(o.model, "claude-sonnet-4-6");
+    }
+
+    #[test]
+    fn effort_defaults_to_low() {
+        assert_eq!(Options::default().effort, "low");
+    }
+
+    #[test]
+    fn parse_effort_flag() {
+        let mut o = Options::default();
+        apply_args(&mut o, &["--effort=high".to_string()]);
+        assert_eq!(o.effort, "high");
     }
 
     #[test]

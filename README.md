@@ -26,7 +26,7 @@ Two-stage hook, mirroring the deferred-review pattern:
 
 1. **Collect phase** (`PostToolUse` on `Write`/`Edit`/`MultiEdit`): the `--collect` mode parses stdin, extracts the diff payload, and drops a small JSON record into `/tmp/no-comment-<session_id>/`. Runs in milliseconds, never blocks.
 
-2. **Review phase** (`Stop`, `asyncRewake`): the `--review` mode reads the per-session records, builds review packets (each `new_string` + context lines from the on-disk file), applies a comment-marker pre-filter to skip code-only edits, then parallel-invokes `claude -p` (Haiku, cap 4) per surviving hunk.
+2. **Review phase** (`Stop`, `asyncRewake`): the `--review` mode reads the per-session records, builds review packets (each `new_string` + context lines from the on-disk file), applies a comment-marker pre-filter to skip code-only edits, then parallel-invokes `claude -p` (Haiku, cap 4) per surviving hunk. Each reviewer call runs with tools off and `--effort low` (thinking disabled via `MAX_THINKING_TOKENS=0` on the child) — a single-shot classification needs no deliberation, so this keeps each call to a few seconds. Raise `--effort` to re-enable proportional thinking.
 
 If no violations, the hook exits 0 silently. If violations are found, findings are printed to stderr and the hook exits 2 — `asyncRewake` injects them into Claude as a system reminder, and Claude addresses them on the next turn.
 
@@ -83,6 +83,7 @@ no-comment-hook --review [OPTIONS]
   --disable=<keys>         Disable principle keys (csv)
   --enable=<keys>          Re-enable previously-disabled keys
   --model=<name>           claude -p model (default: claude-haiku-4-5)
+  --effort=<level>         Reasoning effort: low|medium|high|xhigh|max (default: low)
   --context-lines=<N>      Context lines around hunks (default: 5)
   --timeout=<sec>          Per-hunk reviewer timeout (default: 60)
   --max-parallel=<N>       Concurrent invocations (default: 4)
@@ -105,6 +106,7 @@ Env vars (override CLI flags):
 NO_COMMENT_HOOK_DISABLE=<csv>
 NO_COMMENT_HOOK_ENABLE=<csv>
 NO_COMMENT_HOOK_MODEL=<name>
+NO_COMMENT_HOOK_EFFORT=<level>
 NO_COMMENT_HOOK_CONTEXT_LINES=<N>
 NO_COMMENT_HOOK_TIMEOUT=<sec>
 NO_COMMENT_HOOK_MAX_PARALLEL=<N>

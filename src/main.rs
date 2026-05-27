@@ -55,6 +55,8 @@ REVIEW OPTIONS
   --disable=<keys>                     Disable principle keys (comma-separated)
   --enable=<keys>                      Re-enable previously-disabled keys
   --model=<name>                       claude -p model (default: claude-haiku-4-5)
+  --effort=<level>                     Reasoning effort: low|medium|high|xhigh|max
+                                       (default: low; low disables thinking for speed)
   --context-lines=<N>                  Lines of context around hunks (default: 5)
   --timeout=<sec>                      Per-hunk reviewer timeout (default: 60)
   --max-parallel=<N>                   Concurrent claude -p invocations (default: 4)
@@ -72,6 +74,7 @@ ENV VARS (override CLI flags)
   NO_COMMENT_HOOK_DISABLE           csv principle keys to disable
   NO_COMMENT_HOOK_ENABLE            csv principle keys to re-enable
   NO_COMMENT_HOOK_MODEL             override --model
+  NO_COMMENT_HOOK_EFFORT            override --effort
   NO_COMMENT_HOOK_CONTEXT_LINES     override --context-lines
   NO_COMMENT_HOOK_TIMEOUT           override --timeout
   NO_COMMENT_HOOK_MAX_PARALLEL      override --max-parallel
