@@ -60,7 +60,7 @@ false-positive cost.
 
 ## References
 
-Primary — open on arXiv (full-text HTML), read directly:
+Primary (open, arXiv full-text):
 
 - Oztas, Torun, Tüzün — *Towards Automated Detection of Inline Code Comment Smells* —
   [arxiv.org/html/2504.18956v1](https://arxiv.org/html/2504.18956v1). The comment-smell
@@ -70,14 +70,14 @@ Primary — open on arXiv (full-text HTML), read directly:
 - CRAIC — *Detecting Redundant Method Comments* —
   [arxiv.org/abs/1806.04616](https://arxiv.org/abs/1806.04616). "Entailment from code" (our `redundant`).
 
-Agent-slop context — open on arXiv (full-text HTML), read directly:
+Agent-slop context (open, arXiv full-text):
 
 - Zhu, Tsantalis, Rigby — *AI-Generated Smells* —
   [arxiv.org/html/2605.02741](https://arxiv.org/html/2605.02741). Agent slop is volume-driven and prompt-resistant.
 - Liu et al. (incl. D. Lo) — *Debt Behind the AI Boom* —
   [arxiv.org/html/2603.28592v2](https://arxiv.org/html/2603.28592v2). Agent slop persists in the wild.
 
-Taxonomy origin — not on arXiv, studies human-written comments, not relied on directly:
+Taxonomy origin (human-written comments; gated, not on arXiv):
 
 - Jabrayilzade, Yurtoğlu, Tüzün — *Taxonomy of Inline Code Comment Smells*, EMSE 2024 —
   [doi.org/10.1007/s10664-023-10425-5](https://doi.org/10.1007/s10664-023-10425-5) (SCAM 2021 precursor).
