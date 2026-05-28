@@ -189,8 +189,8 @@ mod tests {
 
     #[test]
     fn review_packet_hides_safety_directive_and_keeps_real_comment() {
-        let file = "fn outer() {\n    let p = q;\n    // SAFETY: p is NUL-terminated.\n    // this comment is the real review target\n    let rc = unsafe { libc::chroot(p) };\n    return rc;\n}\n";
-        let new_text = "    let p = q;\n    // SAFETY: p is NUL-terminated.\n    // this comment is the real review target\n    let rc = unsafe { libc::chroot(p) };\n";
+        let file = "fn outer() {\n    let p = q;\n    // SAFETY: p is NUL-terminated and the C call only reads it.\n    // The pointer outlives the call, so no dangling access is possible.\n    let rc = unsafe { libc::chroot(p) };\n    // this comment is the real review target\n    return rc;\n}\n";
+        let new_text = "    let p = q;\n    // SAFETY: p is NUL-terminated and the C call only reads it.\n    // The pointer outlives the call, so no dangling access is possible.\n    let rc = unsafe { libc::chroot(p) };\n    // this comment is the real review target\n";
         let path = temp_file("safety-mixed", "rs", file);
 
         let hunks = vec![Hunk {
@@ -203,6 +203,10 @@ mod tests {
         assert!(
             !msg.contains("SAFETY"),
             "directive must not appear in review packet:\n{msg}"
+        );
+        assert!(
+            !msg.contains("dangling access"),
+            "multi-line SAFETY continuation must also be hidden:\n{msg}"
         );
         assert!(
             msg.contains("this comment is the real review target"),
