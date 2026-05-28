@@ -5,15 +5,37 @@ pub fn might_have_comment(hunk: &Hunk, opts: &Options) -> bool {
     if opts.pre_filter_off {
         return true;
     }
-    let markers = comment_markers(&hunk.file_path);
-    if markers.is_empty() {
-        return true;
-    }
     let texts: &[&str] = match &hunk.old_text {
         Some(old) => &[old.as_str(), hunk.new_text.as_str()],
         None => &[hunk.new_text.as_str()],
     };
+    if texts.iter().any(|t| has_conflict_markers(t)) {
+        return false;
+    }
+    let markers = comment_markers(&hunk.file_path);
+    if markers.is_empty() {
+        return true;
+    }
     texts.iter().any(|t| markers.iter().any(|m| t.contains(*m)))
+}
+
+fn has_conflict_markers(text: &str) -> bool {
+    let mut start = false;
+    let mut sep = false;
+    let mut end = false;
+    for line in text.lines() {
+        if line.starts_with("<<<<<<< ") {
+            start = true;
+        } else if line.trim_end() == "=======" {
+            sep = true;
+        } else if line.starts_with(">>>>>>> ") {
+            end = true;
+        }
+        if start && sep && end {
+            return true;
+        }
+    }
+    false
 }
 
 pub fn comment_markers(file_path: &str) -> &'static [&'static str] {
@@ -94,5 +116,38 @@ mod tests {
         };
         let h = hunk("/a/b.rs", Some("let x = 1;"), "let x = 2;");
         assert!(might_have_comment(&h, &opts));
+    }
+
+    #[test]
+    fn skips_when_old_text_has_conflict_block() {
+        let opts = Options::default();
+        let old =
+            "fn f() {\n<<<<<<< HEAD\n    // ours\n=======\n    // theirs\n>>>>>>> origin/main\n}\n";
+        let new = "fn f() {\n    // ours\n}\n";
+        assert!(!might_have_comment(&hunk("/a/b.rs", Some(old), new), &opts));
+    }
+
+    #[test]
+    fn skips_when_new_text_has_leftover_markers() {
+        let opts = Options::default();
+        let new = "<<<<<<< HEAD\nlet x = 1;\n=======\nlet x = 2;\n>>>>>>> feature\n";
+        assert!(!might_have_comment(&hunk("/a/b.rs", None, new), &opts));
+    }
+
+    #[test]
+    fn does_not_skip_on_partial_markers() {
+        let opts = Options::default();
+        let new = "// describe <<<<<<< style markers\nlet x = 1;\n";
+        assert!(might_have_comment(&hunk("/a/b.rs", None, new), &opts));
+    }
+
+    #[test]
+    fn pre_filter_off_bypasses_conflict_skip() {
+        let opts = Options {
+            pre_filter_off: true,
+            ..Options::default()
+        };
+        let new = "<<<<<<< HEAD\n=======\n>>>>>>> x\n";
+        assert!(might_have_comment(&hunk("/a/b.rs", None, new), &opts));
     }
 }
