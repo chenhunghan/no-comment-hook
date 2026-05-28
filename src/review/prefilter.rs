@@ -16,7 +16,22 @@ pub fn might_have_comment(hunk: &Hunk, opts: &Options) -> bool {
     if markers.is_empty() {
         return true;
     }
-    texts.iter().any(|t| markers.iter().any(|m| t.contains(*m)))
+    texts
+        .iter()
+        .any(|t| has_non_directive_comment(t, &hunk.file_path, markers))
+}
+
+fn has_non_directive_comment(text: &str, file_path: &str, markers: &[&str]) -> bool {
+    let ext = file_ext_lower(file_path);
+    for line in text.lines() {
+        if !markers.iter().any(|m| line.contains(*m)) {
+            continue;
+        }
+        if !is_directive_line(line, &ext) {
+            return true;
+        }
+    }
+    false
 }
 
 pub fn hunk_still_applies(hunk: &Hunk) -> bool {
@@ -46,11 +61,7 @@ fn has_conflict_markers(text: &str) -> bool {
 }
 
 pub fn comment_markers(file_path: &str) -> &'static [&'static str] {
-    let ext = std::path::Path::new(file_path)
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(str::to_ascii_lowercase)
-        .unwrap_or_default();
+    let ext = file_ext_lower(file_path);
     match ext.as_str() {
         "rs" | "ts" | "tsx" | "js" | "jsx" | "mjs" | "cjs" | "c" | "cpp" | "cc" | "h" | "hpp"
         | "java" | "cs" | "swift" | "kt" | "scala" | "go" | "php" => &["//", "/*", "///", "/**"],
@@ -58,6 +69,87 @@ pub fn comment_markers(file_path: &str) -> &'static [&'static str] {
         "rb" => &["#", "=begin"],
         _ => &[],
     }
+}
+
+pub fn strip_directive_lines(text: &str, file_path: &str) -> String {
+    let ext = file_ext_lower(file_path);
+    let mut out = String::with_capacity(text.len());
+    let mut first = true;
+    for line in text.split('\n') {
+        if is_directive_line(line, &ext) {
+            continue;
+        }
+        if !first {
+            out.push('\n');
+        }
+        out.push_str(line);
+        first = false;
+    }
+    out
+}
+
+fn file_ext_lower(file_path: &str) -> String {
+    std::path::Path::new(file_path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(str::to_ascii_lowercase)
+        .unwrap_or_default()
+}
+
+fn is_directive_line(line: &str, ext: &str) -> bool {
+    let t = line.trim_start();
+    match ext {
+        "rs" => t.starts_with("// SAFETY:") || t.starts_with("//SAFETY:"),
+        "go" => t.starts_with("//go:"),
+        "py" => is_python_directive(t),
+        "ts" | "tsx" | "js" | "jsx" | "mjs" | "cjs" => is_ts_directive(t),
+        "c" | "cpp" | "cc" | "h" | "hpp" => is_c_directive(t),
+        "rb" => is_ruby_directive(t),
+        _ => false,
+    }
+}
+
+fn is_python_directive(t: &str) -> bool {
+    let Some(rest) = t.strip_prefix('#') else {
+        return false;
+    };
+    let rest = rest.trim_start();
+    rest.starts_with("type:")
+        || rest.starts_with("noqa")
+        || rest.starts_with("pylint:")
+        || rest.starts_with("pragma:")
+        || rest.starts_with("fmt:")
+        || rest.starts_with("mypy:")
+        || rest.starts_with("ruff:")
+}
+
+fn is_ts_directive(t: &str) -> bool {
+    t.starts_with("// @ts-")
+        || t.starts_with("//@ts-")
+        || t.starts_with("/// <reference")
+        || t.starts_with("// eslint-disable")
+        || t.starts_with("// eslint-enable")
+        || t.starts_with("/* eslint-disable")
+        || t.starts_with("/* eslint-enable")
+        || t.starts_with("// prettier-ignore")
+        || t.starts_with("// biome-ignore")
+}
+
+fn is_c_directive(t: &str) -> bool {
+    t.starts_with("// NOLINT") || t.starts_with("// clang-format")
+}
+
+fn is_ruby_directive(t: &str) -> bool {
+    let Some(rest) = t.strip_prefix('#') else {
+        return false;
+    };
+    let rest = rest.trim_start();
+    rest.starts_with("frozen_string_literal:")
+        || rest.starts_with("encoding:")
+        || rest.starts_with("coding:")
+        || rest.starts_with("rubocop:")
+        || rest.starts_with("shareable_constant_value:")
+        || rest.starts_with("warn_indent:")
 }
 
 #[cfg(test)]
@@ -181,6 +273,96 @@ mod tests {
     fn does_not_apply_when_file_missing() {
         let h = hunk("/no/such/path-{this-should-not-exist}.rs", None, "anything");
         assert!(!hunk_still_applies(&h));
+    }
+
+    #[test]
+    fn strip_directive_lines_rust_safety() {
+        let src = "let p = q;\n    // SAFETY: p is NUL-terminated.\n    let rc = unsafe { libc::chroot(p) };\n";
+        let out = strip_directive_lines(src, "/a/b.rs");
+        assert!(!out.contains("SAFETY"));
+        assert!(out.contains("let p = q;"));
+        assert!(out.contains("let rc = unsafe { libc::chroot(p) };"));
+    }
+
+    #[test]
+    fn strip_directive_lines_preserves_non_directives() {
+        let src = "// keep me\nfn f() {}\n";
+        let out = strip_directive_lines(src, "/a/b.rs");
+        assert_eq!(out, src);
+    }
+
+    #[test]
+    fn strip_directive_lines_go() {
+        let src = "//go:build linux\npackage x\n";
+        let out = strip_directive_lines(src, "/a/b.go");
+        assert!(!out.contains("go:build"));
+        assert!(out.contains("package x"));
+    }
+
+    #[test]
+    fn strip_directive_lines_python() {
+        let src = "x = 1  # set x\nimport y  # type: ignore\nz = noqa_test()\n# noqa: E501\n";
+        let out = strip_directive_lines(src, "/a/b.py");
+        assert!(out.contains("x = 1"));
+        assert!(out.contains("import y  # type: ignore"));
+        assert!(out.contains("z = noqa_test()"));
+        assert!(!out.contains("# noqa: E501"));
+    }
+
+    #[test]
+    fn strip_directive_lines_ts() {
+        let src = "// @ts-expect-error\nconst x = 1;\n// eslint-disable-next-line no-console\nconsole.log(x);\n";
+        let out = strip_directive_lines(src, "/a/b.ts");
+        assert!(!out.contains("@ts-expect-error"));
+        assert!(!out.contains("eslint-disable"));
+        assert!(out.contains("const x = 1;"));
+        assert!(out.contains("console.log(x);"));
+    }
+
+    #[test]
+    fn strip_directive_lines_c_nolint() {
+        let src = "int x = 0;\n// NOLINTNEXTLINE(readability)\nint y = x;\n";
+        let out = strip_directive_lines(src, "/a/b.cpp");
+        assert!(!out.contains("NOLINT"));
+        assert!(out.contains("int x = 0;"));
+    }
+
+    #[test]
+    fn strip_directive_lines_ruby_magic() {
+        let src = "# frozen_string_literal: true\nclass Foo; end\n";
+        let out = strip_directive_lines(src, "/a/b.rb");
+        assert!(!out.contains("frozen_string_literal"));
+        assert!(out.contains("class Foo; end"));
+    }
+
+    #[test]
+    fn strip_directive_lines_unknown_ext_passthrough() {
+        let src = "// SAFETY: anything\nlet x = 1;\n";
+        let out = strip_directive_lines(src, "/a/b.zzz");
+        assert_eq!(out, src);
+    }
+
+    #[test]
+    fn might_have_comment_skips_directive_only_hunk() {
+        let opts = Options::default();
+        let new =
+            "    let p = q;\n    // SAFETY: p is NUL-terminated.\n    let rc = unsafe { f(p) };\n";
+        let h = hunk("/a.rs", Some("let p = q;\nlet rc = unsafe { f(p) };"), new);
+        assert!(!might_have_comment(&h, &opts));
+    }
+
+    #[test]
+    fn might_have_comment_keeps_mixed_directive_and_real() {
+        let opts = Options::default();
+        let new = "// real comment to review\n// SAFETY: p\nlet x = 1;\n";
+        let h = hunk("/a.rs", None, new);
+        assert!(might_have_comment(&h, &opts));
+    }
+
+    #[test]
+    fn strip_directive_lines_preserves_trailing_newline() {
+        let src = "a\nb\n";
+        assert_eq!(strip_directive_lines(src, "/x.rs"), "a\nb\n");
     }
 
     #[test]

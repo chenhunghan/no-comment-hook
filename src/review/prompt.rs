@@ -1,6 +1,7 @@
 use std::fmt::Write as _;
 
 use super::hunks::{Hunk, line_count};
+use super::prefilter::strip_directive_lines;
 use crate::options::{Options, PRINCIPLES};
 
 const PROMPT_RULES: &str = r#"You are a deterministic classifier for comments in newly-written code, judged against principles of good code comments. Output only JSON.
@@ -58,13 +59,15 @@ fn principles_text(opts: &Options) -> String {
 }
 
 fn build_review_packet(hunk: &Hunk, opts: &Options) -> String {
+    let stripped_new = strip_directive_lines(&hunk.new_text, &hunk.file_path);
     let file_text = std::fs::read_to_string(&hunk.file_path).ok();
     if let Some(content) = file_text {
-        if let Some(range) = locate_new_lines(&content, &hunk.new_text) {
-            return format_with_context(&content, range, opts.context_lines);
+        let stripped_file = strip_directive_lines(&content, &hunk.file_path);
+        if let Some(range) = locate_new_lines(&stripped_file, &stripped_new) {
+            return format_with_context(&stripped_file, range, opts.context_lines);
         }
     }
-    format_without_context(&hunk.new_text)
+    format_without_context(&stripped_new)
 }
 
 fn locate_new_lines(file: &str, new_text: &str) -> Option<(usize, usize)> {
@@ -168,6 +171,53 @@ mod tests {
         let text = principles_text(&opts);
         assert!(!text.contains("Over-explained"));
         assert!(text.contains("Change or task narration"));
+    }
+
+    fn temp_file(name: &str, ext: &str, content: &str) -> std::path::PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "no-comment-prompt-{}-{}-{}.{}",
+            name,
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_or(0, |d| d.as_nanos()),
+            ext,
+        ));
+        std::fs::write(&path, content).unwrap();
+        path
+    }
+
+    #[test]
+    fn review_packet_hides_safety_directive_and_keeps_real_comment() {
+        let file = "fn outer() {\n    let p = q;\n    // SAFETY: p is NUL-terminated.\n    // this comment is the real review target\n    let rc = unsafe { libc::chroot(p) };\n    return rc;\n}\n";
+        let new_text = "    let p = q;\n    // SAFETY: p is NUL-terminated.\n    // this comment is the real review target\n    let rc = unsafe { libc::chroot(p) };\n";
+        let path = temp_file("safety-mixed", "rs", file);
+
+        let hunks = vec![Hunk {
+            file_path: path.to_string_lossy().into_owned(),
+            old_text: Some("let p = q;".into()),
+            new_text: new_text.into(),
+        }];
+        let msg = build_user_message(&hunks, &Options::default());
+
+        assert!(
+            !msg.contains("SAFETY"),
+            "directive must not appear in review packet:\n{msg}"
+        );
+        assert!(
+            msg.contains("this comment is the real review target"),
+            "real comment must survive:\n{msg}"
+        );
+        assert!(
+            msg.contains("fn outer() {") && msg.contains("return rc;"),
+            "surrounding file context must be present:\n{msg}"
+        );
+        assert!(
+            msg.contains("[NEW] "),
+            "edit lines must still be marked [NEW]:\n{msg}"
+        );
+
+        let _ = std::fs::remove_file(&path);
     }
 
     #[test]
