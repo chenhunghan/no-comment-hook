@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.6.0...no-comment-hook-v0.6.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* strip multi-line // SAFETY: justifications from review ([#8](https://github.com/chenhunghan/no-comment-hook/issues/8)) ([e3c8d2a](https://github.com/chenhunghan/no-comment-hook/commit/e3c8d2af5767d7b8d93af7c624bf4e55a4dcf1da))
+
 ## [0.6.0](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.5.0...no-comment-hook-v0.6.0) (2026-05-28)
 
 
