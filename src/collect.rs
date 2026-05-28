@@ -92,6 +92,12 @@ pub fn session_dir(session_id: &str) -> PathBuf {
     PathBuf::from("/tmp").join(format!("no-comment-{session_id}"))
 }
 
+/// Sibling of `session_dir`, so the deferral store survives the per-Stop
+/// `cleanup_session` that wipes the records dir.
+pub fn seen_path(session_id: &str) -> PathBuf {
+    PathBuf::from("/tmp").join(format!("no-comment-{session_id}.seen"))
+}
+
 pub fn is_source_ext<S: AsRef<str>>(file_path: &str, allow: &[S]) -> bool {
     let ext = match Path::new(file_path).extension().and_then(|e| e.to_str()) {
         Some(e) => format!(".{}", e.to_ascii_lowercase()),

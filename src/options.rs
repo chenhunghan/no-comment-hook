@@ -9,6 +9,8 @@ pub struct Options {
     pub pre_filter_off: bool,
     pub debug: bool,
     pub claude_bin: String,
+    pub defer_window: u64,
+    pub defer_cap: u32,
 }
 
 pub struct Principle {
@@ -98,6 +100,8 @@ impl Default for Options {
             pre_filter_off: false,
             debug: false,
             claude_bin: "claude".to_string(),
+            defer_window: 5,
+            defer_cap: 2,
         }
     }
 }
@@ -160,6 +164,14 @@ fn apply_args(o: &mut Options, args: &[String]) {
             extend_source_ext(o, v);
         } else if let Some(v) = arg.strip_prefix("--claude-bin=") {
             o.claude_bin = v.to_string();
+        } else if let Some(v) = arg.strip_prefix("--defer-window=") {
+            if let Ok(n) = v.parse() {
+                o.defer_window = n;
+            }
+        } else if let Some(v) = arg.strip_prefix("--defer-cap=") {
+            if let Ok(n) = v.parse() {
+                o.defer_cap = n;
+            }
         } else if arg == "--no-pre-filter" {
             o.pre_filter_off = true;
         } else if arg == "--debug" {
@@ -357,6 +369,24 @@ mod tests {
         assert_eq!(o.context_lines, 10);
         assert_eq!(o.timeout_secs, 30);
         assert_eq!(o.max_parallel, 8);
+    }
+
+    #[test]
+    fn defer_defaults_on() {
+        let o = Options::default();
+        assert_eq!(o.defer_window, 5);
+        assert_eq!(o.defer_cap, 2);
+    }
+
+    #[test]
+    fn parse_defer_flags() {
+        let mut o = Options::default();
+        apply_args(
+            &mut o,
+            &["--defer-window=0".to_string(), "--defer-cap=3".to_string()],
+        );
+        assert_eq!(o.defer_window, 0);
+        assert_eq!(o.defer_cap, 3);
     }
 
     #[test]

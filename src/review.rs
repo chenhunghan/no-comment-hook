@@ -1,3 +1,4 @@
+mod defer;
 mod hunks;
 mod parse;
 mod prefilter;
@@ -26,6 +27,15 @@ pub fn run(input: &str, opts: &Options) -> ExitCode {
     if records.is_empty() {
         return ExitCode::SUCCESS;
     }
+
+    // Advance the deferral window once per review with edits to look at, and
+    // persist it now so the window keeps moving even on the early returns below.
+    let mut store = (opts.defer_window > 0).then(|| {
+        let mut s = defer::Store::load(&session_id);
+        s.tick();
+        s.save(&session_id, opts.defer_window);
+        s
+    });
 
     if !opts.any_principle_enabled() {
         if opts.debug {
@@ -60,6 +70,22 @@ pub fn run(input: &str, opts: &Options) -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
-    let _ = writeln!(std::io::stderr().lock(), "{}", format_findings(&findings));
+    let blocking = match store.as_mut() {
+        Some(s) => {
+            let (blocking, deferred) = s.partition(findings, opts.defer_window, opts.defer_cap);
+            s.save(&session_id, opts.defer_window);
+            if opts.debug && deferred > 0 {
+                println!("[no-comment-hook] deferred {deferred} already-raised finding(s)");
+            }
+            blocking
+        }
+        None => findings,
+    };
+
+    if blocking.is_empty() {
+        return ExitCode::SUCCESS;
+    }
+
+    let _ = writeln!(std::io::stderr().lock(), "{}", format_findings(&blocking));
     ExitCode::from(2)
 }

@@ -67,6 +67,8 @@ On the published plugin, edit that line in its bundled `hooks/hooks.json` (note:
 | `--context-lines=<N>` | `5` | Lines of context shown to the reviewer |
 | `--timeout=<sec>` | `60` | Per-review timeout |
 | `--max-parallel=<N>` | `4` | Max concurrent reviews |
+| `--defer-window=<N>` | `5` | Stops a repeat finding stays deferred before it can block again (`0` = always block) |
+| `--defer-cap=<N>` | `2` | Max times one file+check can block within the window before deferring |
 | `--claude-bin=<path>` | `claude` | Path to the `claude` CLI |
 | `--debug` | off | Verbose diagnostics |
 
@@ -74,6 +76,7 @@ Run `no-comment-hook --help` for the full list.
 
 ## Good to know
 
+- **It won't nag in a loop.** Once a finding has blocked, the same complaint (and, after `--defer-cap` hits, repeated rewordings of it on the same file) steps aside for the next `--defer-window` stops, so re-editing a file can't trap the agent in a closed review loop.
 - **It never breaks your session.** If anything goes wrong (offline, timeout, rate limit), it stays silent and lets you keep working.
 - **It's fast and out of your way.** Reviews run after your turn finishes (~2–3s), and only when you actually wrote comments — so it doesn't block you.
 - **Your code stays local.** Only the comment and its surrounding code are sent to the review model — never your whole codebase — the same way any `claude -p` call works.
