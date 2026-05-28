@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.5.0...no-comment-hook-v0.6.0) (2026-05-28)
+
+
+### Features
+
+* hide tool/compiler directive comments from review ([a9c5d71](https://github.com/chenhunghan/no-comment-hook/commit/a9c5d71e80372d9993f884fa2b6e153b3df7e776))
+
 ## [0.5.0](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.4.2...no-comment-hook-v0.5.0) (2026-05-28)
 
 
