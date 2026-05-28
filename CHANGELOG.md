@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.4.2...no-comment-hook-v0.5.0) (2026-05-28)
+
+
+### Features
+
+* skip review on conflict-resolution hunks ([e1b678d](https://github.com/chenhunghan/no-comment-hook/commit/e1b678df1dc384e51f6d878de938d06d2779578b))
+
+
+### Bug Fixes
+
+* skip hunks whose new text is no longer in the file ([b84aaf7](https://github.com/chenhunghan/no-comment-hook/commit/b84aaf7e653618d0c5302483a53998b94a8f6dad))
+
 ## [0.4.2](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.4.1...no-comment-hook-v0.4.2) (2026-05-27)
 
 
