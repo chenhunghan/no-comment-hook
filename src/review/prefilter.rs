@@ -19,6 +19,13 @@ pub fn might_have_comment(hunk: &Hunk, opts: &Options) -> bool {
     texts.iter().any(|t| markers.iter().any(|m| t.contains(*m)))
 }
 
+pub fn hunk_still_applies(hunk: &Hunk) -> bool {
+    match std::fs::read_to_string(&hunk.file_path) {
+        Ok(content) => content.contains(&hunk.new_text),
+        Err(_) => false,
+    }
+}
+
 fn has_conflict_markers(text: &str) -> bool {
     let mut start = false;
     let mut sep = false;
@@ -139,6 +146,41 @@ mod tests {
         let opts = Options::default();
         let new = "// describe <<<<<<< style markers\nlet x = 1;\n";
         assert!(might_have_comment(&hunk("/a/b.rs", None, new), &opts));
+    }
+
+    fn temp_file(name: &str, content: &str) -> std::path::PathBuf {
+        let path = std::env::temp_dir().join(format!(
+            "no-comment-still-applies-{}-{}-{}",
+            name,
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_or(0, |d| d.as_nanos())
+        ));
+        std::fs::write(&path, content).unwrap();
+        path
+    }
+
+    #[test]
+    fn still_applies_when_new_text_in_file() {
+        let path = temp_file("present", "fn a() {}\n// keep me\nfn b() {}\n");
+        let h = hunk(path.to_str().unwrap(), None, "// keep me");
+        assert!(hunk_still_applies(&h));
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn does_not_apply_when_new_text_gone() {
+        let path = temp_file("gone", "fn a() {}\nfn b() {}\n");
+        let h = hunk(path.to_str().unwrap(), None, "// removed since");
+        assert!(!hunk_still_applies(&h));
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn does_not_apply_when_file_missing() {
+        let h = hunk("/no/such/path-{this-should-not-exist}.rs", None, "anything");
+        assert!(!hunk_still_applies(&h));
     }
 
     #[test]

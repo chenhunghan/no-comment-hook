@@ -13,7 +13,7 @@ use crate::options::Options;
 
 use hunks::{Hunk, build_hunks};
 use parse::format_findings;
-use prefilter::might_have_comment;
+use prefilter::{hunk_still_applies, might_have_comment};
 use runner::run_parallel;
 
 pub fn run(input: &str, opts: &Options) -> ExitCode {
@@ -38,18 +38,19 @@ pub fn run(input: &str, opts: &Options) -> ExitCode {
     let filtered: Vec<Hunk> = all_hunks
         .into_iter()
         .filter(|h| might_have_comment(h, opts))
+        .filter(hunk_still_applies)
         .collect();
 
     if filtered.is_empty() {
         if opts.debug {
-            println!("[no-comment-hook] pre-filter eliminated all hunks");
+            println!("[no-comment-hook] filters eliminated all hunks");
         }
         return ExitCode::SUCCESS;
     }
 
     if opts.debug {
         println!(
-            "[no-comment-hook] {} hunk(s) survived pre-filter, invoking claude -p",
+            "[no-comment-hook] {} hunk(s) survived filters, invoking claude -p",
             filtered.len()
         );
     }
