@@ -23,11 +23,17 @@ pub fn might_have_comment(hunk: &Hunk, opts: &Options) -> bool {
 
 fn has_non_directive_comment(text: &str, file_path: &str, markers: &[&str]) -> bool {
     let ext = file_ext_lower(file_path);
+    let mut in_safety = false;
     for line in text.lines() {
-        if !markers.iter().any(|m| line.contains(*m)) {
+        if is_directive_line(line, &ext) {
+            in_safety = is_rust_safety_comment(line.trim_start(), &ext);
             continue;
         }
-        if !is_directive_line(line, &ext) {
+        if in_safety && is_safety_continuation(line, &ext) {
+            continue;
+        }
+        in_safety = false;
+        if markers.iter().any(|m| line.contains(*m)) {
             return true;
         }
     }
@@ -75,10 +81,16 @@ pub fn strip_directive_lines(text: &str, file_path: &str) -> String {
     let ext = file_ext_lower(file_path);
     let mut out = String::with_capacity(text.len());
     let mut first = true;
+    let mut in_safety = false;
     for line in text.split('\n') {
         if is_directive_line(line, &ext) {
+            in_safety = is_rust_safety_comment(line.trim_start(), &ext);
             continue;
         }
+        if in_safety && is_safety_continuation(line, &ext) {
+            continue;
+        }
+        in_safety = false;
         if !first {
             out.push('\n');
         }
@@ -99,7 +111,7 @@ fn file_ext_lower(file_path: &str) -> String {
 fn is_directive_line(line: &str, ext: &str) -> bool {
     let t = line.trim_start();
     match ext {
-        "rs" => t.starts_with("// SAFETY:") || t.starts_with("//SAFETY:"),
+        "rs" => is_rust_safety_comment(t, ext),
         "go" => t.starts_with("//go:"),
         "py" => is_python_directive(t),
         "ts" | "tsx" | "js" | "jsx" | "mjs" | "cjs" => is_ts_directive(t),
@@ -107,6 +119,23 @@ fn is_directive_line(line: &str, ext: &str) -> bool {
         "rb" => is_ruby_directive(t),
         _ => false,
     }
+}
+
+fn is_rust_safety_comment(trimmed: &str, ext: &str) -> bool {
+    ext == "rs" && (trimmed.starts_with("// SAFETY:") || trimmed.starts_with("//SAFETY:"))
+}
+
+/// A `//` line that continues a multi-line Rust `// SAFETY:` justification.
+/// `clippy::undocumented_unsafe_blocks` only requires the block to *start*
+/// with `SAFETY:`, so the prose often spills onto following plain `//` lines.
+/// Doc comments (`///`, `//!`) are not continuations — they end the block and
+/// stay visible to the reviewer.
+fn is_safety_continuation(line: &str, ext: &str) -> bool {
+    if ext != "rs" {
+        return false;
+    }
+    let t = line.trim_start();
+    t.starts_with("//") && !t.starts_with("///") && !t.starts_with("//!")
 }
 
 fn is_python_directive(t: &str) -> bool {
@@ -355,6 +384,49 @@ mod tests {
     fn might_have_comment_keeps_mixed_directive_and_real() {
         let opts = Options::default();
         let new = "// real comment to review\n// SAFETY: p\nlet x = 1;\n";
+        let h = hunk("/a.rs", None, new);
+        assert!(might_have_comment(&h, &opts));
+    }
+
+    #[test]
+    fn strip_directive_lines_multiline_safety_block() {
+        let src = "    // SAFETY: rs_signal_init runs pre-fork, before any handler is\n    // registered, so the process-wide race in the rustdoc cannot occur.\n    let rc = unsafe { f() };\n";
+        let out = strip_directive_lines(src, "/a/b.rs");
+        assert!(!out.contains("SAFETY"));
+        assert!(!out.contains("registered, so the process-wide race"));
+        assert!(out.contains("let rc = unsafe { f() };"));
+    }
+
+    #[test]
+    fn strip_directive_lines_safety_block_stops_at_code() {
+        let src = "    // SAFETY: justified.\n    let x = 1;\n    // a real comment to review\n    let y = x;\n";
+        let out = strip_directive_lines(src, "/a/b.rs");
+        assert!(!out.contains("SAFETY"));
+        assert!(out.contains("// a real comment to review"));
+        assert!(out.contains("let x = 1;"));
+    }
+
+    #[test]
+    fn strip_directive_lines_safety_block_keeps_doc_comment() {
+        let src =
+            "    // SAFETY: justified.\n    /// doc comment, not a continuation\n    fn f() {}\n";
+        let out = strip_directive_lines(src, "/a/b.rs");
+        assert!(!out.contains("SAFETY"));
+        assert!(out.contains("/// doc comment, not a continuation"));
+    }
+
+    #[test]
+    fn might_have_comment_skips_multiline_safety_only_hunk() {
+        let opts = Options::default();
+        let new = "    // SAFETY: only called pre-fork, before handlers exist, so the\n    // documented process-wide race cannot happen here.\n    let rc = unsafe { f() };\n";
+        let h = hunk("/a.rs", Some("let rc = unsafe { f() };"), new);
+        assert!(!might_have_comment(&h, &opts));
+    }
+
+    #[test]
+    fn might_have_comment_keeps_real_comment_after_safety_block() {
+        let opts = Options::default();
+        let new = "    // SAFETY: justified across\n    // two lines.\n    let x = 1; // increment counter\n";
         let h = hunk("/a.rs", None, new);
         assert!(might_have_comment(&h, &opts));
     }
