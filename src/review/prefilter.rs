@@ -125,11 +125,8 @@ fn is_rust_safety_comment(trimmed: &str, ext: &str) -> bool {
     ext == "rs" && (trimmed.starts_with("// SAFETY:") || trimmed.starts_with("//SAFETY:"))
 }
 
-/// A `//` line that continues a multi-line Rust `// SAFETY:` justification.
-/// `clippy::undocumented_unsafe_blocks` only requires the block to *start*
-/// with `SAFETY:`, so the prose often spills onto following plain `//` lines.
-/// Doc comments (`///`, `//!`) are not continuations — they end the block and
-/// stay visible to the reviewer.
+// clippy is satisfied by `SAFETY:` on a block's first line alone, so the
+// continuation `//` lines must be hidden too; `///`/`//!` stay visible.
 fn is_safety_continuation(line: &str, ext: &str) -> bool {
     if ext != "rs" {
         return false;
