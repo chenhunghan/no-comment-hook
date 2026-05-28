@@ -60,6 +60,11 @@ REVIEW OPTIONS
   --context-lines=<N>                  Lines of context around hunks (default: 5)
   --timeout=<sec>                      Per-hunk reviewer timeout (default: 60)
   --max-parallel=<N>                   Concurrent claude -p invocations (default: 4)
+  --defer-window=<N>                   Stops a repeat finding stays deferred
+                                       before it can block again (default: 5;
+                                       0 disables deferral, always blocking)
+  --defer-cap=<N>                      Max blocks per file+principle within the
+                                       window before deferring (default: 2)
   --source-ext=<.foo,.bar>             Extend source-extension allowlist
   --claude-bin=<path>                  Path to `claude` (default: claude on PATH)
   --no-pre-filter                      Skip comment-marker pre-filter
