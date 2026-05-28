@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.6.1...no-comment-hook-v0.7.0) (2026-05-28)
+
+
+### Features
+
+* defer repeat review findings to break Stop-hook loops ([#10](https://github.com/chenhunghan/no-comment-hook/issues/10)) ([1b51565](https://github.com/chenhunghan/no-comment-hook/commit/1b515658ab7b3c2540b2a1ca71a6ee5a8bbf8a8d))
+
 ## [0.6.1](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.6.0...no-comment-hook-v0.6.1) (2026-05-28)
 
 
