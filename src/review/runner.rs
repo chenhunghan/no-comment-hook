@@ -4,16 +4,16 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use super::hunks::Hunk;
+use super::candidates::Candidate;
 use super::parse::parse_findings;
 use super::prompt::{build_system_prompt, build_user_message};
 use crate::options::Options;
 
-const MAX_HUNKS_PER_CALL: usize = 20;
+const MAX_COMMENTS_PER_CALL: usize = 20;
 
-pub fn run_parallel(hunks: &[Hunk], opts: &Options) -> Vec<String> {
+pub fn run_parallel(candidates: &[Candidate], opts: &Options) -> Vec<String> {
     let system = build_system_prompt(opts);
-    let batches: Vec<&[Hunk]> = hunks.chunks(MAX_HUNKS_PER_CALL).collect();
+    let batches: Vec<&[Candidate]> = candidates.chunks(MAX_COMMENTS_PER_CALL).collect();
     let parallelism = opts.max_parallel.max(1);
     let mut all = Vec::new();
     for group in batches.chunks(parallelism) {
@@ -35,15 +35,15 @@ pub fn run_parallel(hunks: &[Hunk], opts: &Options) -> Vec<String> {
     all
 }
 
-fn review_batch(hunks: &[Hunk], system: &str, opts: &Options) -> Vec<String> {
-    let user = build_user_message(hunks, opts);
+fn review_batch(candidates: &[Candidate], system: &str, opts: &Options) -> Vec<String> {
+    let user = build_user_message(candidates);
     let Some(output) = invoke_claude(system, &user, opts) else {
         if opts.debug {
             println!("[no-comment-hook] claude -p returned no output");
         }
         return Vec::new();
     };
-    parse_findings(&output, hunks, opts)
+    parse_findings(&output, candidates, opts)
 }
 
 fn invoke_claude(system: &str, user: &str, opts: &Options) -> Option<String> {

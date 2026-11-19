@@ -1,26 +1,42 @@
 use std::fmt::Write as _;
 
-use super::hunks::Hunk;
+use super::candidates::Candidate;
 use crate::extract;
 use crate::options::Options;
 
-pub fn parse_findings(claude_output: &str, hunks: &[Hunk], opts: &Options) -> Vec<String> {
+/// One line per finding, keyed `{file}: principle {p} — {quote}` (the deferral
+/// store and the eval harness both read that first line), then the reason.
+pub fn parse_findings(
+    claude_output: &str,
+    candidates: &[Candidate],
+    opts: &Options,
+) -> Vec<String> {
     let inner =
         extract::string_field(claude_output, "result").unwrap_or_else(|| claude_output.to_string());
     let trimmed = strip_code_fence(&inner);
 
-    let mut out = Vec::new();
+    let mut out: Vec<String> = Vec::new();
     for obj in extract::objects_in_array(trimmed, "findings") {
         let principle = extract_principle(obj).unwrap_or_else(|| "?".to_string());
         if !opts.principle_enabled(&principle) {
             continue;
         }
-        let quote = extract::string_field(obj, "quote").unwrap_or_default();
+        let Some(c) = extract_usize_field(obj, "comment")
+            .and_then(|n| n.checked_sub(1))
+            .and_then(|i| candidates.get(i))
+        else {
+            continue;
+        };
         let why = extract::string_field(obj, "why").unwrap_or_default();
-        let file_path = finding_file(obj, hunks);
-        out.push(format!(
-            "{file_path}: principle {principle} — {quote}\n      → {why}"
-        ));
+        let finding = format!(
+            "{}: principle {principle} — {}\n      → line {}: {why}",
+            c.file_path,
+            c.quote(),
+            c.start_line
+        );
+        if !out.contains(&finding) {
+            out.push(finding);
+        }
     }
     out
 }
@@ -58,17 +74,6 @@ fn extract_principle(obj: &str) -> Option<String> {
     extract_usize_field(obj, "principle").map(|n| n.to_string())
 }
 
-/// Map a finding to its file via the `hunk` index it was tagged with; fall back
-/// to the first hunk when the index is missing or out of range.
-fn finding_file<'a>(obj: &str, hunks: &'a [Hunk]) -> &'a str {
-    if let Some(idx) = extract_usize_field(obj, "hunk") {
-        if let Some(h) = idx.checked_sub(1).and_then(|i| hunks.get(i)) {
-            return &h.file_path;
-        }
-    }
-    hunks.first().map_or("?", |h| h.file_path.as_str())
-}
-
 fn extract_usize_field(obj: &str, field: &str) -> Option<usize> {
     let marker = format!("\"{field}\":");
     let pos = obj.find(&marker)?;
@@ -81,89 +86,85 @@ fn extract_usize_field(obj: &str, field: &str) -> Option<usize> {
 mod tests {
     use super::*;
 
-    fn one(path: &str) -> Vec<Hunk> {
-        vec![Hunk {
-            file_path: path.into(),
-            old_text: None,
-            new_text: String::new(),
-        }]
+    fn cands() -> Vec<Candidate> {
+        ["/a.rs", "/b.rs"]
+            .iter()
+            .enumerate()
+            .map(|(i, p)| Candidate {
+                file_path: (*p).into(),
+                start_line: 10 + i,
+                end_line: 10 + i,
+                text: format!("// comment {i}\n// more"),
+                excerpt: String::new(),
+            })
+            .collect()
     }
 
     #[test]
     fn parse_findings_handles_empty() {
         let claude = r#"{"result":"{\"findings\":[]}"}"#;
-        assert!(parse_findings(claude, &one("/x.rs"), &Options::default()).is_empty());
+        assert_eq!(
+            parse_findings(claude, &cands(), &Options::default()),
+            Vec::<String>::new()
+        );
     }
 
     #[test]
-    fn parse_findings_extracts_single() {
-        let claude = r#"{"result":"{\"findings\":[{\"hunk\":1,\"principle\":3,\"quote\":\"// Pin: third arm\",\"why\":\"meta-framing\"}]}"}"#;
-        let f = parse_findings(claude, &one("/x.rs"), &Options::default());
-        assert_eq!(f.len(), 1);
-        assert!(f[0].contains("/x.rs"));
-        assert!(f[0].contains("principle 3"));
-        assert!(f[0].contains("// Pin: third arm"));
-        assert!(f[0].contains("meta-framing"));
+    fn parse_findings_names_file_line_and_quote_from_the_comment() {
+        let claude = r#"{"result":"{\"findings\":[{\"comment\":2,\"principle\":3,\"why\":\"meta-framing\"}]}"}"#;
+        let f = parse_findings(claude, &cands(), &Options::default());
+        assert_eq!(
+            f,
+            ["/b.rs: principle 3 — // comment 1\n      → line 11: meta-framing"]
+        );
     }
 
     #[test]
-    fn parse_findings_routes_by_hunk_index() {
-        let claude = r#"{"result":"{\"findings\":[{\"hunk\":2,\"principle\":1,\"quote\":\"q\",\"why\":\"w\"}]}"}"#;
-        let hunks = vec![
-            Hunk {
-                file_path: "/a.rs".into(),
-                old_text: None,
-                new_text: String::new(),
-            },
-            Hunk {
-                file_path: "/b.rs".into(),
-                old_text: None,
-                new_text: String::new(),
-            },
-        ];
-        let f = parse_findings(claude, &hunks, &Options::default());
-        assert_eq!(f.len(), 1);
-        assert!(f[0].contains("/b.rs"));
-    }
-
-    #[test]
-    fn parse_findings_missing_hunk_falls_back_to_first() {
+    fn parse_findings_drops_unknown_or_missing_comment_numbers() {
         let claude =
-            r#"{"result":"{\"findings\":[{\"principle\":1,\"quote\":\"q\",\"why\":\"w\"}]}"}"#;
-        let f = parse_findings(claude, &one("/only.rs"), &Options::default());
-        assert!(f[0].contains("/only.rs"));
+            r#"{"findings":[{"comment":9,"principle":1,"why":"w"},{"principle":1,"why":"w"}]}"#;
+        assert_eq!(
+            parse_findings(claude, &cands(), &Options::default()),
+            Vec::<String>::new()
+        );
+    }
+
+    #[test]
+    fn parse_findings_dedupes_repeats() {
+        let claude = r#"{"findings":[{"comment":1,"principle":1,"why":"w"},{"comment":1,"principle":1,"why":"w"}]}"#;
+        assert_eq!(
+            parse_findings(claude, &cands(), &Options::default()).len(),
+            1
+        );
     }
 
     #[test]
     fn parse_findings_handles_string_principle() {
-        let claude = r#"{"result":"{\"findings\":[{\"hunk\":1,\"principle\":\"change-narration\",\"quote\":\"// x\",\"why\":\"y\"}]}"}"#;
-        let f = parse_findings(claude, &one("/x.rs"), &Options::default());
-        assert_eq!(f.len(), 1);
+        let claude = r#"{"findings":[{"comment":1,"principle":"change-narration","why":"y"}]}"#;
+        let f = parse_findings(claude, &cands(), &Options::default());
         assert!(f[0].contains("principle change-narration"));
     }
 
     #[test]
     fn parse_findings_handles_markdown_fence() {
-        let claude = r#"{"result":"```json\n{\"findings\":[{\"hunk\":1,\"principle\":1,\"quote\":\"a\",\"why\":\"b\"}]}\n```"}"#;
-        let f = parse_findings(claude, &one("/x.rs"), &Options::default());
-        assert_eq!(f.len(), 1);
-    }
-
-    #[test]
-    fn parse_findings_handles_raw_output_no_wrapper() {
-        let raw = r#"{"findings":[{"hunk":1,"principle":1,"quote":"a","why":"b"}]}"#;
-        let f = parse_findings(raw, &one("/x.rs"), &Options::default());
-        assert_eq!(f.len(), 1);
+        let claude = r#"{"result":"```json\n{\"findings\":[{\"comment\":1,\"principle\":1,\"why\":\"b\"}]}\n```"}"#;
+        assert_eq!(
+            parse_findings(claude, &cands(), &Options::default()).len(),
+            1
+        );
     }
 
     #[test]
     fn parse_findings_drops_disabled_principle() {
-        let claude = r#"{"result":"{\"findings\":[{\"hunk\":1,\"principle\":1,\"quote\":\"q\",\"why\":\"w\"}]}"}"#;
+        let claude = r#"{"findings":[{"comment":1,"principle":1,"why":"w"}]}"#;
         let opts = Options {
             disabled: vec!["redundant".into()],
             ..Options::default()
         };
-        assert!(parse_findings(claude, &one("/x.rs"), &opts).is_empty());
+        assert_eq!(
+            parse_findings(claude, &cands(), &opts),
+            Vec::<String>::new()
+        );
     }
 
     #[test]

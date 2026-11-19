@@ -244,7 +244,7 @@ mod tests {
         let mut s2 = restored;
         s2.tick();
         let (block, deferred) = s2.partition(vec![finding("/a.rs", 1, "// keep")], 5, 2);
-        assert!(block.is_empty());
+        assert_eq!(block, Vec::<String>::new());
         assert_eq!(deferred, 1);
     }
 

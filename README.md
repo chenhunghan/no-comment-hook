@@ -63,8 +63,8 @@ On the published plugin, edit that line in its bundled `hooks/hooks.json` (note:
 | `--enable=<keys>` | — | Re-enable previously disabled checks |
 | `--model=<name>` | `claude-haiku-5-5` | Review model |
 | `--effort=<level>` | `low` | Reasoning effort (`low`…`max`); `low` is fastest (~2s) |
-| `--source-ext=<.a,.b>` | — | Review additional file types |
-| `--context-lines=<N>` | `5` | Lines of context shown to the reviewer |
+| `--source-ext=<.a,.b>` | — | Review additional file types (other languages: `//`, `/* */`, `#` and `--` comments) |
+| `--context-lines=<N>` | `5` | Lines of code shown to the reviewer around each comment |
 | `--timeout=<sec>` | `60` | Per-review timeout |
 | `--max-parallel=<N>` | `4` | Max concurrent reviews |
 | `--defer-window=<N>` | `5` | Stops a repeat finding stays deferred before it can block again (`0` = always block) |
@@ -78,7 +78,8 @@ Run `no-comment-hook --help` for the full list.
 
 - **It won't nag in a loop.** Once a finding has blocked, the same complaint (and, after `--defer-cap` hits, repeated rewordings of it on the same file) steps aside for the next `--defer-window` stops, so re-editing a file can't trap the agent in a closed review loop.
 - **It never breaks your session.** If anything goes wrong (offline, timeout, rate limit), it stays silent and lets you keep working.
-- **It's fast and out of your way.** Reviews run after your turn finishes (~2–3s), and only when you actually wrote comments — so it doesn't block you.
+- **It only reviews what the agent wrote.** A built-in lexer finds the comments on the lines each edit changed, so the comments already in your code are never judged, and text that only looks like a comment (`"https://…"`, `'#fff'`) is ignored.
+- **It's fast and out of your way.** Reviews run after your turn finishes (~2–3s), and only when the agent actually wrote comments — otherwise the model is never called.
 - **Your code stays local.** Only the comment and its surrounding code are sent to the review model — never your whole codebase — the same way any `claude -p` call works.
 
 ## Update / Uninstall
