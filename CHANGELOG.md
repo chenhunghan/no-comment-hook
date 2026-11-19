@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.0](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.7.0...no-comment-hook-v0.8.0) (2026-11-19)
+
+
+### Features
+
+* default review model to claude-haiku-5-5 ([37e3151](https://github.com/chenhunghan/no-comment-hook/commit/37e31514a54e2a466060c914b8ae67db2e41eff5))
+* find comments with a lexer and review only lines the agent changed ([#13](https://github.com/chenhunghan/no-comment-hook/issues/13)) ([6b21071](https://github.com/chenhunghan/no-comment-hook/commit/6b21071c894076975f6838770b58c5cd60be763c))
+
+
+### Bug Fixes
+
+* pin downloaded binary to the plugin's own version ([ba58fd2](https://github.com/chenhunghan/no-comment-hook/commit/ba58fd271decbaa84a2a9b67dc385363b5677224))
+* quote ${CLAUDE_PLUGIN_ROOT} in hook commands ([ae5d663](https://github.com/chenhunghan/no-comment-hook/commit/ae5d663970d82e23caf95a06132bc94b747ee1b8))
+
 ## [0.7.0](https://github.com/chenhunghan/no-comment-hook/compare/no-comment-hook-v0.6.1...no-comment-hook-v0.7.0) (2026-05-28)
 
 
