@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/setup.sh\""
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/bin/no-comment-hook --collect"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/no-comment-hook\" --collect"
           }
         ]
       }
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/bin/no-comment-hook --review",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/no-comment-hook\" --review",
             "asyncRewake": true
           }
         ]

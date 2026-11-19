@@ -44,7 +44,7 @@ It works out of the box — the defaults are sensible, so most people change not
 Configuration is via flags on the hook's `--review` command, e.g.:
 
 ```jsonc
-"command": "${CLAUDE_PLUGIN_ROOT}/bin/no-comment-hook --review --disable=over-explained --effort=medium"
+"command": "\"${CLAUDE_PLUGIN_ROOT}/bin/no-comment-hook\" --review --disable=over-explained --effort=medium"
 ```
 
 On the published plugin, edit that line in its bundled `hooks/hooks.json` (note: reset on each update). For flags that persist across updates, use `make install-local` (see [Development](#development)) — it runs the hook from your own `~/.claude/settings.json`, where the flags stay yours.
@@ -61,7 +61,7 @@ On the published plugin, edit that line in its bundled `hooks/hooks.json` (note:
 |---|---|---|
 | `--disable=<keys>` | — | Turn off checks (keys/groups above) |
 | `--enable=<keys>` | — | Re-enable previously disabled checks |
-| `--model=<name>` | `claude-haiku-4-5` | Review model |
+| `--model=<name>` | `claude-haiku-5-5` | Review model |
 | `--effort=<level>` | `low` | Reasoning effort (`low`…`max`); `low` is fastest (~2s) |
 | `--source-ext=<.a,.b>` | — | Review additional file types |
 | `--context-lines=<N>` | `5` | Lines of context shown to the reviewer |
