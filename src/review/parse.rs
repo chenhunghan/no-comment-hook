@@ -103,7 +103,10 @@ mod tests {
     #[test]
     fn parse_findings_handles_empty() {
         let claude = r#"{"result":"{\"findings\":[]}"}"#;
-        assert!(parse_findings(claude, &cands(), &Options::default()).is_empty());
+        assert_eq!(
+            parse_findings(claude, &cands(), &Options::default()),
+            Vec::<String>::new()
+        );
     }
 
     #[test]
@@ -120,7 +123,10 @@ mod tests {
     fn parse_findings_drops_unknown_or_missing_comment_numbers() {
         let claude =
             r#"{"findings":[{"comment":9,"principle":1,"why":"w"},{"principle":1,"why":"w"}]}"#;
-        assert!(parse_findings(claude, &cands(), &Options::default()).is_empty());
+        assert_eq!(
+            parse_findings(claude, &cands(), &Options::default()),
+            Vec::<String>::new()
+        );
     }
 
     #[test]
@@ -155,7 +161,10 @@ mod tests {
             disabled: vec!["redundant".into()],
             ..Options::default()
         };
-        assert!(parse_findings(claude, &cands(), &opts).is_empty());
+        assert_eq!(
+            parse_findings(claude, &cands(), &opts),
+            Vec::<String>::new()
+        );
     }
 
     #[test]

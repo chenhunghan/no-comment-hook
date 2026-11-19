@@ -201,12 +201,12 @@ mod tests {
     #[test]
     fn objects_in_array_empty() {
         let j = r#"{"edits":[]}"#;
-        assert!(objects_in_array(j, "edits").is_empty());
+        assert_eq!(objects_in_array(j, "edits"), Vec::<&str>::new());
     }
 
     #[test]
     fn objects_in_array_missing() {
-        assert!(objects_in_array(r#"{"x":1}"#, "edits").is_empty());
+        assert_eq!(objects_in_array(r#"{"x":1}"#, "edits"), Vec::<&str>::new());
     }
 
     #[test]
