@@ -4,68 +4,59 @@ set -e
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(dirname "$(dirname "$0")")}"
 BIN_DIR="${PLUGIN_ROOT}/bin"
 BINARY_NAME="no-comment-hook"
+BINARY="${BIN_DIR}/${BINARY_NAME}"
 REPO="chenhunghan/no-comment-hook"
 
-get_latest_version() {
-  curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | \
-    grep '"tag_name"' | sed -E 's/.*"tag_name": *"[^"]*-v([0-9]+\.[0-9]+\.[0-9]+)".*/\1/'
+message() {
+  echo "{\"continue\": true, \"systemMessage\": \"[no-comment-hook] $1\"}"
+  exit 0
 }
 
-get_installed_version() {
-  if [[ -x "$BIN_DIR/$BINARY_NAME" ]]; then
-    "$BIN_DIR/$BINARY_NAME" --version 2>/dev/null || echo ""
-  else
-    echo ""
-  fi
-}
+# The binary is pinned to this plugin's own version so it always matches the
+# flags in hooks/hooks.json. release-please bumps plugin.json and cuts the
+# matching tag in the same release.
+VERSION=$(sed -nE 's/^[[:space:]]*"version"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/p' \
+  "${PLUGIN_ROOT}/.claude-plugin/plugin.json" 2>/dev/null | head -n 1)
 
-INSTALLED_VERSION=$(get_installed_version)
-LATEST_VERSION=$(get_latest_version)
-
-if [[ -x "$BIN_DIR/$BINARY_NAME" ]] && [[ -n "$INSTALLED_VERSION" ]] && [[ -n "$LATEST_VERSION" ]]; then
-  INSTALLED_NORMALIZED="${INSTALLED_VERSION#v}"
-  LATEST_NORMALIZED="${LATEST_VERSION#v}"
-  if [[ "$INSTALLED_NORMALIZED" == "$LATEST_NORMALIZED" ]]; then
-    exit 0
-  fi
+INSTALLED=""
+if [[ -x "$BINARY" ]]; then
+  INSTALLED=$("$BINARY" --version 2>/dev/null || true)
 fi
 
-if [[ -z "$LATEST_VERSION" ]] && [[ -x "$BIN_DIR/$BINARY_NAME" ]]; then
+if [[ -z "$VERSION" ]]; then
+  [[ -n "$INSTALLED" ]] && exit 0
+  message "cannot read plugin version from .claude-plugin/plugin.json"
+fi
+
+if [[ "${INSTALLED#v}" == "$VERSION" ]]; then
   exit 0
 fi
 
-mkdir -p "$BIN_DIR"
-
-OS=$(uname -s)
-ARCH=$(uname -m)
-
-case "$OS-$ARCH" in
-  Darwin-arm64)
-    PLATFORM="aarch64-apple-darwin"
-    ;;
-  Darwin-x86_64)
-    PLATFORM="x86_64-apple-darwin"
-    ;;
-  Linux-x86_64)
-    PLATFORM="x86_64-unknown-linux-gnu"
-    ;;
-  Linux-aarch64)
-    PLATFORM="aarch64-unknown-linux-gnu"
-    ;;
-  *)
-    echo "{\"continue\": true, \"systemMessage\": \"[no-comment-hook] unsupported platform $OS-$ARCH\"}"
-    exit 0
-    ;;
+case "$(uname -s)-$(uname -m)" in
+  Darwin-arm64) PLATFORM="aarch64-apple-darwin" ;;
+  Darwin-x86_64) PLATFORM="x86_64-apple-darwin" ;;
+  Linux-x86_64) PLATFORM="x86_64-unknown-linux-gnu" ;;
+  Linux-aarch64 | Linux-arm64) PLATFORM="aarch64-unknown-linux-gnu" ;;
+  *) message "unsupported platform $(uname -s)-$(uname -m)" ;;
 esac
 
-RELEASE_URL="https://github.com/${REPO}/releases/latest/download/${BINARY_NAME}-${PLATFORM}.tar.gz"
+URL="https://github.com/${REPO}/releases/download/${BINARY_NAME}-v${VERSION}/${BINARY_NAME}-${PLATFORM}.tar.gz"
 
-cd "$BIN_DIR"
-if curl -fsSL "$RELEASE_URL" | tar xz 2>/dev/null; then
-  chmod +x "$BIN_DIR/$BINARY_NAME"
-  echo "{\"continue\": true, \"systemMessage\": \"[no-comment-hook] binary installed ($LATEST_VERSION)\"}"
-else
-  echo "{\"continue\": true, \"systemMessage\": \"[no-comment-hook] failed to download binary from $RELEASE_URL\"}"
+mkdir -p "$BIN_DIR"
+# Staged inside BIN_DIR so the final mv is an atomic rename on one filesystem:
+# a dropped download or a concurrent session never leaves a half-written binary.
+STAGE=$(mktemp -d "${BIN_DIR}/.download.XXXXXX")
+trap 'rm -rf "$STAGE"' EXIT
+
+if curl -fsL --connect-timeout 5 --max-time 60 "$URL" -o "$STAGE/archive.tar.gz" &&
+  tar xzf "$STAGE/archive.tar.gz" -C "$STAGE" "$BINARY_NAME" 2>/dev/null &&
+  chmod +x "$STAGE/$BINARY_NAME" &&
+  [[ "$("$STAGE/$BINARY_NAME" --version 2>/dev/null)" == "$VERSION" ]]; then
+  mv -f "$STAGE/$BINARY_NAME" "$BINARY"
+  message "binary installed ($VERSION)"
 fi
 
-exit 0
+if [[ -n "$INSTALLED" ]]; then
+  message "could not download $VERSION, keeping $INSTALLED; will retry next session"
+fi
+message "could not download $VERSION from $URL; will retry next session"
