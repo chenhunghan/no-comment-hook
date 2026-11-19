@@ -1,0 +1,26 @@
+# Dev-only: scores src/lexer.rs against tree-sitter on real source files.
+# Not part of the plugin build; see README.md here.
+[package]
+name = "lexer-check"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+tree-sitter = "0.25"
+tree-sitter-c = "0.24"
+tree-sitter-c-sharp = "0.23"
+tree-sitter-cpp = "0.23"
+tree-sitter-go = "0.25"
+tree-sitter-java = "0.23"
+tree-sitter-javascript = "0.25"
+tree-sitter-kotlin-ng = "1"
+tree-sitter-php = "0.24"
+tree-sitter-python = "0.25"
+tree-sitter-ruby = "0.23"
+tree-sitter-rust = "0.24"
+tree-sitter-scala = "0.26"
+tree-sitter-swift = "0.7"
+tree-sitter-typescript = "0.23"

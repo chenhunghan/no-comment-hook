@@ -6,7 +6,6 @@ pub struct Options {
     pub context_lines: usize,
     pub timeout_secs: u64,
     pub max_parallel: usize,
-    pub pre_filter_off: bool,
     pub debug: bool,
     pub claude_bin: String,
     pub defer_window: u64,
@@ -80,8 +79,9 @@ pub const PRINCIPLES: &[Principle] = &[
 ];
 
 const DEFAULT_SOURCE_EXTS: &[&str] = &[
-    ".rs", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".py", ".go", ".java", ".c", ".cpp",
-    ".cc", ".h", ".hpp", ".rb", ".swift", ".kt", ".scala", ".cs", ".php",
+    ".rs", ".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs", ".py", ".pyi", ".go",
+    ".java", ".c", ".h", ".cpp", ".cc", ".cxx", ".hpp", ".hh", ".hxx", ".rb", ".rake", ".swift",
+    ".kt", ".kts", ".scala", ".cs", ".php",
 ];
 
 impl Default for Options {
@@ -97,7 +97,6 @@ impl Default for Options {
             context_lines: 5,
             timeout_secs: 60,
             max_parallel: 4,
-            pre_filter_off: false,
             debug: false,
             claude_bin: "claude".to_string(),
             defer_window: 5,
@@ -172,8 +171,6 @@ fn apply_args(o: &mut Options, args: &[String]) {
             if let Ok(n) = v.parse() {
                 o.defer_cap = n;
             }
-        } else if arg == "--no-pre-filter" {
-            o.pre_filter_off = true;
         } else if arg == "--debug" {
             o.debug = true;
         }
@@ -387,12 +384,5 @@ mod tests {
         );
         assert_eq!(o.defer_window, 0);
         assert_eq!(o.defer_cap, 3);
-    }
-
-    #[test]
-    fn no_pre_filter_flag() {
-        let mut o = Options::default();
-        apply_args(&mut o, &["--no-pre-filter".to_string()]);
-        assert!(o.pre_filter_off);
     }
 }

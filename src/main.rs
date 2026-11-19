@@ -1,5 +1,6 @@
 mod collect;
 mod extract;
+mod lexer;
 mod options;
 mod review;
 
@@ -57,17 +58,17 @@ REVIEW OPTIONS
   --model=<name>                       claude -p model (default: claude-haiku-5-5)
   --effort=<level>                     Reasoning effort: low|medium|high|xhigh|max
                                        (default: low; low disables thinking for speed)
-  --context-lines=<N>                  Lines of context around hunks (default: 5)
-  --timeout=<sec>                      Per-hunk reviewer timeout (default: 60)
+  --context-lines=<N>                  Lines of code shown around each comment (default: 5)
+  --timeout=<sec>                      Per-call reviewer timeout (default: 60)
   --max-parallel=<N>                   Concurrent claude -p invocations (default: 4)
   --defer-window=<N>                   Stops a repeat finding stays deferred
                                        before it can block again (default: 5;
                                        0 disables deferral, always blocking)
   --defer-cap=<N>                      Max blocks per file+principle within the
                                        window before deferring (default: 2)
-  --source-ext=<.foo,.bar>             Extend source-extension allowlist
+  --source-ext=<.foo,.bar>             Extend source-extension allowlist (unknown
+                                       languages: //, /* */, # and -- comments)
   --claude-bin=<path>                  Path to `claude` (default: claude on PATH)
-  --no-pre-filter                      Skip comment-marker pre-filter
   --debug                              Diagnostics to stdout
 
 PRINCIPLE KEYS
