@@ -54,7 +54,7 @@ USAGE
 REVIEW OPTIONS
   --disable=<keys>                     Disable principle keys (comma-separated)
   --enable=<keys>                      Re-enable previously-disabled keys
-  --model=<name>                       claude -p model (default: claude-haiku-4-5)
+  --model=<name>                       claude -p model (default: claude-haiku-5-5)
   --effort=<level>                     Reasoning effort: low|medium|high|xhigh|max
                                        (default: low; low disables thinking for speed)
   --context-lines=<N>                  Lines of context around hunks (default: 5)

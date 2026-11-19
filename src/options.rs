@@ -92,7 +92,7 @@ impl Default for Options {
                 .map(|s| (*s).to_string())
                 .collect(),
             disabled: Vec::new(),
-            model: "claude-haiku-4-5".to_string(),
+            model: "claude-haiku-5-5".to_string(),
             effort: "low".to_string(),
             context_lines: 5,
             timeout_secs: 60,
